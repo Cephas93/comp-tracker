@@ -1,0 +1,2947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Compensation Calculator v4.8</title>
+  <style>
+    :root {
+  /* ── 60% dominant — deep space ── */
+  --bg:       #04080F;
+  --surface:  #0A1120;
+  --surface2: #0D1829;
+  --border:   #1A2840;
+  --input:    #070E1A;
+  --shadow:   rgba(0,0,0,.65);
+
+  /* ── text ── */
+  --text:  #E2E8F0;
+  --muted: #6B7FA3;
+
+  /* ── 10% accents — rich & distinct ── */
+  --blue:   #3B82F6;   /* electric blue — base pay card */
+  --blue2:  #818CF8;   /* lighter indigo — differential */
+  --cyan:   #06B6D4;   /* deep cyan — OT / rates */
+  --green:  #14b864;   /* rich emerald — wealth */
+  --green2: #0c6b3d;   /* dark emerald */
+  --amber:  #F59E0B;   /* warm amber — monthly / caution */
+  --red:    #EF4444;   /* crimson — deductions / negative */
+  --violet: #7C3AED;   /* deep violet — RSU / equity */
+  --orange: #EA580C;   /* burnt orange — holiday / OT accent */
+  --teal:   #0D9488;   /* deep teal — monthly net */
+  --gold:   #CA8A04;   /* dark gold — sign-on */
+  --lime:   #65A30D;   /* olive-lime — HSA */
+}
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at top left,  rgba(99,102,241,.12), transparent 40%),
+        radial-gradient(ellipse at top right, rgba(124,58,237,.09), transparent 38%),
+        radial-gradient(ellipse at bottom,    rgba(34,197,94,.04),  transparent 50%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+      line-height: 1.35;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .app {
+      width: min(1640px, calc(100vw - 32px));
+      margin: 18px auto 28px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .02em;
+      text-transform: none;
+    }
+
+    .badge {
+      border: 1px solid var(--border);
+      background: rgba(22,27,34,.75);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(740px, 0.98fr) minmax(740px, 1.02fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+  background: linear-gradient(160deg, rgba(13,24,41,.98) 0%, rgba(7,14,26,.99) 100%);
+  border: 1px solid rgba(26,40,64,.95);
+  border-radius: 14px;
+  box-shadow: 0 20px 50px var(--shadow), inset 0 1px 0 rgba(99,102,241,.06);
+  overflow: visible;
+}
+
+    .panel-head { padding: 13px 16px 11px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .panel-head:hover { background: rgba(255,255,255,.02); }
+    .panel-head:focus-visible {
+      outline: none;
+      border-color: rgba(41,182,246,.58);
+      box-shadow: inset 0 0 0 2px rgba(41,182,246,.26), 0 0 0 1px rgba(41,182,246,.12);
+      background: rgba(41,182,246,.05);
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .help-tip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: 1px solid rgba(6,182,212,.42);
+      border-radius: 50%;
+      background: rgba(6,182,212,.10);
+      color: var(--cyan);
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      vertical-align: middle;
+      cursor: help;
+      text-transform: none;
+      letter-spacing: 0;
+      flex: 0 0 auto;
+      z-index: 20;
+    }
+
+    .help-tip:hover,
+    .help-tip.is-open {
+      z-index: 500;
+    }
+
+    .help-pop {
+      position: absolute;
+      left: 50%;
+      top: calc(100% + 8px);
+      width: min(270px, calc(100vw - 48px));
+      transform: translateX(-50%) translateY(4px);
+      padding: 9px 10px;
+      border: 1px solid rgba(41,182,246,.28);
+      border-radius: 8px;
+      background: rgba(4,8,15,.98);
+      box-shadow: 0 12px 30px rgba(0,0,0,.55);
+      color: var(--text);
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.35;
+      text-align: left;
+      text-transform: none;
+      letter-spacing: 0;
+      white-space: normal;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .12s ease, transform .12s ease, visibility .12s ease;
+      z-index: 200;
+    }
+
+    .help-pop::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-bottom-color: rgba(4,8,15,.98);
+    }
+
+    .help-tip:hover .help-pop,
+    .help-tip.is-open .help-pop {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .panel-title .help-tip,
+    .card .label .help-tip,
+    td .help-tip {
+      transform: translateY(-1px);
+    }
+
+    label .help-tip { align-self: flex-start; margin-top: 1px; }
+
+    .card .label .help-tip { z-index: 600; }
+    .card .label .help-pop { z-index: 601; }
+
+    .tax-year-badge {
+      font-size: 10px;
+      color: var(--violet);
+      background: rgba(124,58,237,.12);
+      border: 1px solid rgba(124,58,237,.3);
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
+
+    .panel-body { padding: 14px 16px 16px; }
+
+    .section {
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(48,54,61,.75);
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: 0;
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 12px;
+      color: var(--text);
+      letter-spacing: -0.01em;
+      font-weight: 700;
+    }
+
+    .inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: .04em;
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      background: var(--input);
+      border: 1px solid rgba(26,40,64,.95);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 10px;
+      outline: none;
+      font-size: 12px;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    input:focus, select:focus {
+      border-color: #29b6f6;
+      box-shadow: 0 0 0 2px rgba(41,182,246,.2), 0 0 10px rgba(41,182,246,.12);
+    }
+
+    input.auto-filled {
+      border-color: rgba(6,182,212,.4);
+      background: rgba(6,182,212,.04);
+    }
+
+    .tax-section {
+      background: linear-gradient(135deg, rgba(13,24,41,.95) 0%, rgba(4,8,15,.98) 100%);
+      border: 1px solid rgba(41,182,246,.12);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+
+    .tax-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .auto-tag {
+      font-size: 9px;
+      color: var(--cyan);
+      background: rgba(6,182,212,.1);
+      border: 1px solid rgba(6,182,212,.25);
+      border-radius: 999px;
+      padding: 1px 6px;
+      letter-spacing: .04em;
+    }
+
+    .bracket-info {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(48,54,61,.6);
+      display: flex;
+      gap: 16px;
+    }
+
+    .bracket-info span { color: var(--text); }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card {
+  background: linear-gradient(160deg, rgba(17,28,50,.98) 0%, rgba(10,17,32,.99) 100%);
+  border: 1px solid rgba(26,40,64,.9);
+  border-radius: 14px;
+  padding: 14px;
+  min-height: 106px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.03);
+  overflow: visible;
+  position: relative;
+  isolation: auto;
+}
+
+    .card .label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: .04em;
+    }
+
+    .card .value {
+      font-size: clamp(14px, 1.8vw, 22px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card .note {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .blue { color: var(--blue); }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
+    .amber { color: var(--amber); }
+    .cyan { color: var(--cyan); }
+    .violet { color: var(--violet); }
+    .orange { color: var(--orange); }
+    .teal { color: var(--teal); }
+
+    .tables {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th {
+      text-align: left;
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: 0 0 10px;
+    }
+
+    td {
+      border-top: 1px solid var(--border);
+      padding: 9px 0;
+    }
+
+    td:last-child {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .chart-wrap {
+      margin-top: 16px;
+      background: rgba(4,8,15,.7);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 280px;
+      display: block;
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 10px;
+      margin-top: 10px;
+    }
+
+    .warning-panel {
+      position: relative;
+      margin: 0 0 12px;
+      background: rgba(245,158,11,.06);
+      border: 1px solid rgba(245,158,11,.28);
+      border-radius: 14px;
+      padding: 12px 40px 12px 14px;
+      color: var(--amber);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+    .warning-panel strong { color: var(--text); }
+    .warning-panel ul { margin: 8px 0 0 18px; padding: 0; }
+    .warning-panel li { margin: 4px 0; }
+
+    .warning-dismiss {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 2px 6px;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .warning-dismiss:hover {
+      color: var(--text);
+      border-color: transparent;
+    }
+    .assumption-panel {
+      margin-top: 16px;
+      background: rgba(13,17,23,.7);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.55;
+      text-transform: none;
+      letter-spacing: .02em;
+    }
+    .assumption-panel strong { color: var(--text); }
+
+    .footer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .top-row {
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      gap: 16px;
+      align-items: start;
+      margin: 0 0 12px;
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      margin: 0;
+    }
+
+    .top-assumptions {
+      min-height: 64px;
+    }
+
+    .top-assumptions .panel-body {
+      padding: 10px 14px;
+    }
+
+    .top-assumptions .panel-title {
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    .top-assumptions .assumption-copy {
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .shortcut-box {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(26,40,64,0.9);
+    }
+
+    .shortcut-title {
+      margin-bottom: 7px;
+      color: var(--text);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .shortcut-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 14px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .shortcut-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .key-combo {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 18px;
+      padding: 0 6px;
+      border: 1px solid rgba(0,212,255,0.45);
+      border-bottom-color: rgba(0,212,255,0.7);
+      border-radius: 5px;
+      background: rgba(2,8,20,0.8);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 8px;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.08);
+    }
+
+    .left-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .left-stack .panel {
+      width: 100%;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    button:hover { border-color: var(--blue); }
+
+    button.primary {
+      background: rgba(47,129,247,.16);
+      border-color: rgba(47,129,247,.48);
+    }
+
+    /* ── STACKED BAR ── */
+    .stacked-bar-wrap { width:100%; margin-bottom:16px; }
+    .stacked-bar { display:flex; height:52px; border-radius:10px; overflow:hidden; gap:1.5px; background:rgba(26,40,64,.6); }
+    .stacked-bar-empty { display:flex; align-items:center; justify-content:center; width:100%; color:var(--muted); font-size:11px; }
+    .bar-segment { height:100%; position:relative; transition:width .4s cubic-bezier(.4,0,.2,1),opacity .15s; cursor:pointer; min-width:0; overflow:hidden; }
+    .bar-segment:first-child { border-radius:9px 0 0 9px; }
+    .bar-segment:last-child  { border-radius:0 9px 9px 0; }
+    .bar-segment:only-child  { border-radius:9px; }
+    .bar-segment:hover { opacity:.82; filter:brightness(1.18); }
+    .bar-tooltip { position:fixed; background:rgba(10,17,32,.97); border:1px solid rgba(99,102,241,.3); border-radius:8px; padding:8px 12px; font-size:11px; color:var(--text); pointer-events:none; z-index:1000; white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+    .stacked-legend { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; margin-top:14px; }
+    .legend-item { display:flex; align-items:flex-start; gap:8px; min-width:0; }
+    .legend-swatch { width:10px; height:10px; border-radius:3px; flex-shrink:0; margin-top:3px; }
+    .legend-item-text { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .legend-label { font-size:10px; color:var(--text); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .legend-sub { font-size:10px; color:var(--muted); white-space:nowrap; }
+    .legend-sub span { color:var(--muted); margin-left:4px; }
+
+    .chart-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .chart-total-label {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .chart-total-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--green);
+      margin-top: 3px;
+    }
+
+    .chart-type-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .chart-type-control select {
+      min-width: 150px;
+    }
+
+    .chart-view {
+      display: none;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .chart-view.is-active {
+      display: block;
+    }
+
+    .donut-layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .donut-canvas-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: min(100%, 320px);
+      min-height: 260px;
+    }
+
+    .donut-canvas {
+      width: min(100%, 280px);
+      max-width: 280px;
+      aspect-ratio: 1;
+      height: auto;
+      display: block;
+    }
+
+    .donut-center {
+      position: absolute;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      width: 132px;
+      max-width: 48%;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .donut-center-label {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .donut-center-value {
+      margin-top: 5px;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.05;
+      overflow-wrap: anywhere;
+    }
+
+    .donut-center-sub {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .rsu-panel { margin-top: 0; }
+
+    .rsu-company-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .rsu-co-pill {
+      background: rgba(48,54,61,.4);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      font-family: inherit;
+      font-weight: 700;
+      transition: all .12s;
+    }
+
+    .rsu-co-pill.active {
+      color: var(--text);
+    }
+
+    .rsu-co-pill[data-co="msft"].active  { background: rgba(47,129,247,.18); border-color: #2f81f7; }
+    .rsu-co-pill[data-co="amzn"].active  { background: rgba(210,153,34,.18); border-color: #d29922; }
+    .rsu-co-pill[data-co="meta"].active  { background: rgba(86,211,100,.18); border-color: #56d364; }
+    .rsu-co-pill[data-co="goog"].active  { background: rgba(57,197,207,.18); border-color: #39c5cf; }
+    .rsu-co-pill[data-co="custom"].active { background: rgba(124,58,237,.18); border-color: #7c3aed; }
+
+    .rsu-custom-inputs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .rsu-canvas-wrap {
+      margin-top: 14px;
+      background: rgba(13,17,23,.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+
+    header .tax-year-badge {
+      margin-top: 2px;
+      color: var(--violet);
+      border-color: rgba(124,58,237,.4);
+      background: rgba(124,58,237,.1);
+      font-weight: 800;
+    }
+
+    .top-actions button {
+      min-width: 132px;
+    }
+
+    section > .summary-cards:first-child {
+      margin-top: 0;
+    }
+
+    .summary-cards + .summary-cards {
+      margin-top: 10px;
+    }
+
+    .card {
+      position: relative;
+      overflow: visible;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: var(--card-accent, var(--blue));
+      opacity: 0.7;
+    }
+
+    .card .note {
+      line-height: 1.45;
+    }
+
+    .left-stack .warning-panel {
+      display: none;
+      margin-bottom: 0;
+    }
+
+    .tables table {
+      background: rgba(13,17,23,.22);
+    }
+
+
+
+    .dashboard-main { min-width: 0; }
+    .top-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .top-metrics .card { min-height: 116px; }
+    .top-metrics .card .label { color: var(--text); }
+    .compact-rate-card .rate-lines { display: grid; gap: 6px; }
+    .compact-rate-card .rate-lines div { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; border-top: 1px solid rgba(48,54,61,.55); padding-top: 5px; }
+    .compact-rate-card .rate-lines div:first-child { border-top: 0; padding-top: 0; }
+    .compact-rate-card span { color: var(--muted); font-size: 9px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .compact-rate-card strong { font-size: 10px; text-align: right; white-space: nowrap; flex-shrink: 0; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .dashboard-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .comp-panel, .tax-panel { min-width: 0; }
+    .cashflow-panel, .rsu-panel { min-width: 0; }
+    .assumption-bottom-panel { margin-top: 12px; }
+    .assumption-copy { color: var(--muted); font-size: 10px; line-height: 1.55; text-transform: none; letter-spacing: .02em; }
+
+    .breakdown-table td, .summary-table td { padding: 7px 0; }
+    .breakdown-table td:nth-child(2), .breakdown-table th:nth-child(2) { text-align: right; }
+    .breakdown-table td:nth-child(3), .breakdown-table th:nth-child(3) { text-align: right; }
+    .summary-table td:last-child, .summary-table th:last-child { text-align: right; font-weight: 700; }
+    .total-row td { border-top: 1px solid rgba(139,148,158,.45); font-weight: 800; color: var(--text); padding-top: 11px; }
+    .rsu-total-row td { color: var(--text); }
+    .green-total td { color: var(--text); }
+    .red-total td { color: var(--text); }
+    .hidden-legacy-values { display: none; }
+
+    .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; vertical-align:middle; }
+    .base-bg    { background:#14b864; }   /* 150° base */
+    .differential-bg   { background:#4e94da; }   /* 210° differential */
+    .ot-bg    { background:#ccb05c; }   /* 45°  OT */
+    .holiday-bg  { background:#cf5959; }   /* 0°   holiday */
+    .rsu-bg  { background:#4c4cdc; }   /* 240° RSU */
+    .bonus-bg   { background:#d15794; }   /* 330° bonus */
+    .signon-bg  { background:#cc945c; }   /* 30°  sign-on */
+    .match-bg    { background:#47e1e1; }   /* 180° 401k match */
+    .oncall-bg { background:#b949df; }   /* 285° oncall */
+    .hsa-bg     { background:#94e345; }   /* 90°  HSA */
+    .other-equity-bg  { background:#cb5dcb; }   /* 300° other equity */
+    .perks-bg   { background:#5bcd5b; }   /* 120° perks */
+
+    .rsu-belt-track { position: relative; height: 9px; background: rgba(26,40,64,.8); border-radius: 999px; overflow: hidden; border: 1px solid rgba(99,102,241,.12); }
+    .rsu-belt-cumulative { position:absolute; inset:0 auto 0 0; width:0%; border-radius:999px; background: rgba(124,58,237,.22); }
+    .rsu-belt-annual { position:absolute; inset:0 auto 0 0; width:0%; border-radius:999px; }
+    .belt-year1 { background: linear-gradient(90deg, #181877, #4c4cdc); box-shadow:0 0 8px rgba(76,76,220,.3); }
+    .belt-year2 { background: linear-gradient(90deg, #0c6b3d, #14b864); box-shadow:0 0 8px rgba(20,184,100,.3); }
+    .belt-year3 { background: linear-gradient(90deg, #601579, #b949df); box-shadow:0 0 8px rgba(185,73,223,.3); }
+    .belt-year4 { background: linear-gradient(90deg, #6d5a22, #ccb05c); box-shadow:0 0 8px rgba(204,176,92,.3); }
+
+    .cashflow-legend { min-width: 0; }
+    .cashflow-legend {
+      width:100%;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(190px, 1fr));
+      gap:10px 18px;
+      font-size:11px;
+      color:var(--text);
+      min-width:0;
+      align-content:start;
+      overflow: visible;
+    }
+    .cashflow-legend { min-width: 0; }
+
+    .compact-select { width:auto; min-width:210px; padding:7px 10px; font-size:11px; }
+    .compact-rsu-pills { display:none; }
+    .rsu-table-wrap { margin-top:4px; }
+
+    .rsu-progress-cell { min-width: 160px; }
+    .summary-table th, .summary-table td { white-space: nowrap; }
+    .summary-table th:nth-child(4), .summary-table td:nth-child(4) { white-space: normal; }
+    .rsu-belt-label { color: var(--muted); font-size: 10px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+    /* totalComp inherits white from .total-row td */
+
+
+    @media (max-width: 1480px) {
+      .grid { grid-template-columns: 1fr; }
+      .top-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 1320px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .cashflow-legend { grid-template-columns: 1fr; align-content:start; }
+    }
+
+    @media (max-width: 1100px) {
+      .grid, .top-row { grid-template-columns: 1fr; }
+      .summary-cards, .top-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tables { grid-template-columns: 1fr; }
+      header { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (max-width: 700px) {
+      .shortcut-list { grid-template-columns: 1fr; }
+      .shortcut-item { align-items: flex-start; }
+      .chart-toolbar { align-items: flex-start; flex-direction: column; }
+      .chart-type-control { width: 100%; justify-content: space-between; }
+      .chart-type-control select { min-width: 0; width: 170px; }
+      .donut-canvas-wrap { min-height: 230px; }
+      .donut-canvas { width: min(100%, 240px); }
+    }
+    .input-two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+    }
+
+    .taxes-column, .ops-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .left-stack { gap: 10px; }
+    .left-stack .panel-body { padding: 12px 14px 14px; }
+    .left-stack .panel-head { padding: 11px 14px 10px; }
+    .input-two-col .section { margin-bottom: 12px; padding-bottom: 12px; }
+
+    .cashflow-legend { min-width: 0; }
+
+    @media (max-width: 1320px) {
+      .input-two-col { grid-template-columns: 1fr; }
+      .taxes-column { order: 1; }
+      .ops-column { order: 2; }
+    }
+
+    @media (max-width: 760px) {
+      .app { width: min(100%, calc(100vw - 24px)); }
+      .input-two-col, .grid, .dashboard-grid { grid-template-columns: 1fr; }
+      .rsu-table-wrap { overflow-x: auto; }
+      .summary-cards, .top-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 480px) {
+      body { font-size: 11px; }
+      .app { width: min(100%, calc(100vw - 16px)); margin: 10px auto 20px; }
+      .summary-cards, .top-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .inputs { grid-template-columns: 1fr; }
+      .card .value { font-size: clamp(13px, 5vw, 18px); }
+      .panel-body { padding: 10px 12px 12px; }
+      .panel-head { padding: 10px 12px 9px; }
+      h1 { font-size: 15px; }
+      .top-actions { flex-wrap: wrap; gap: 8px; }
+      .stacked-legend { grid-template-columns: 1fr; }
+      .cashflow-legend { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body { background: #04080F !important; color: #E2E8F0 !important; }
+      .app { width: 100% !important; margin: 0 !important; }
+      .panel { box-shadow: none !important; page-break-inside: avoid; }
+      .top-actions, button, .shortcut-box, footer { display: none !important; }
+      .grid { grid-template-columns: 1fr !important; }
+      .input-two-col, .dashboard-grid { grid-template-columns: 1fr 1fr !important; }
+      .panel-body { display: block !important; }
+      canvas { max-height: 220px !important; }
+      .summary-cards, .top-metrics { grid-template-columns: repeat(4, 1fr) !important; }
+    }
+
+    /* ── SHORTCUT PANEL ── */
+    #shortcutPanel { position: relative; display: inline-block; }
+    #shortcutToggleBtn { color: var(--text); display: flex; align-items: center; gap: 6px; }
+    #shortcutToggleBtn:hover { border-color: var(--blue); color: var(--text); }
+    #shortcutDropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 300;
+      background: rgba(4,8,15,.98);
+      border: 1px solid rgba(41,182,246,.28);
+      border-radius: 10px;
+      padding: 12px 14px;
+      min-width: 340px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.6);
+    }
+    #shortcutDropdown.is-open { display: block; }
+    #shortcutDropdown .shortcut-title { margin-bottom: 10px; color: var(--text); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    #shortcutDropdown .shortcut-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; color: var(--text); font-size: 9px; line-height: 1.35; }
+    @media (max-width: 480px) {
+      #shortcutDropdown { min-width: calc(100vw - 48px); }
+      #shortcutDropdown .shortcut-list { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Compensation Calculator</h1>
+        <div class="subtitle">Model total compensation with schedule-based pay, bonuses, benefits, equity, and estimated taxes</div>
+      </div>
+      <div class="tax-year-badge">2025 Tax Year</div>
+    </header>
+
+    <div class="top-row">
+      <div class="top-actions">
+        <button id="reset">Reset to blank</button>
+        <button onclick="exportPDF()">⬇ Export PDF</button>
+        <div id="shortcutPanel">
+          <button id="shortcutToggleBtn" onclick="toggleShortcuts(event)" title="Keyboard shortcuts" style="min-width:160px;">⌨ Keyboard Shortcuts</button>
+          <div id="shortcutDropdown">
+            <div class="shortcut-title">Keyboard Shortcuts</div>
+            <div class="shortcut-list">
+              <div class="shortcut-item"><span class="key-combo"><kbd>Tab</kbd></span><span>Move to the next field or section arrow.</span></div>
+              <div class="shortcut-item"><span class="key-combo"><kbd>Shift</kbd><span>+</span><kbd>Tab</kbd></span><span>Collapse the current section from inside a field.</span></div>
+              <div class="shortcut-item"><span class="key-combo"><kbd>Enter</kbd></span><span>Expand or collapse a highlighted section.</span></div>
+              <div class="shortcut-item"><span class="key-combo"><kbd>Space</kbd></span><span>Expand or collapse a highlighted section.</span></div>
+              <div class="shortcut-item"><span class="key-combo"><kbd>?</kbd></span><span>Hover or tap for plain-English term help.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <aside class="left-stack">
+        <div id="warningPanel" class="warning-panel" style="display:none;"></div>
+
+        <div class="input-two-col">
+          <div class="taxes-column">
+            <div class="panel">
+                      <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('taxes')">
+                        <div class="panel-title">Taxes & Deductions</div>
+                        <div id="taxesToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+                      </div>
+                      <div class="panel-body" id="taxesPanelBody">
+                        <!-- Filing status -->
+                        <div style="margin-bottom:12px;">
+                          <div class="field full">
+                            <label for="filingSelect">Filing status</label>
+                            <select id="filingSelect">
+                              <option value="" selected>── SELECT ──</option>
+                              <option value="custom">Custom federal rate</option>
+                              <option value="single">Single</option>
+                              <option value="mfj">Married — filing jointly</option>
+                              <option value="mfs">Married — filing separately</option>
+                              <option value="hoh">Head of household</option>
+                            </select>
+                          </div>
+                        </div>
+            
+                        <!-- Federal auto -->
+                        <div class="tax-section">
+                          <div class="tax-section-title">Federal <span class="auto-tag">AUTO · 2025 tax year</span></div>
+                          <div class="inputs">
+                            <div class="field">
+                              <label for="federalRate">Effective rate %</label>
+                              <input id="federalRate" type="number" inputmode="decimal" step="0.01" placeholder="—" readonly>
+                            </div>
+                            <div class="field">
+                              <label for="federalMarginal">Marginal bracket %</label>
+                              <input id="federalMarginal" type="number" inputmode="decimal" step="0.01" placeholder="—" readonly>
+                            </div>
+                          </div>
+                          <div class="bracket-info" id="fedBracketInfo">
+                            <div>Taxable income: <span id="fedTaxableDisplay">—</span></div>
+                            <div>Bracket: <span id="fedBracketDisplay">—</span></div>
+                          </div>
+                        </div>
+            
+                        <!-- State auto -->
+                        <div class="tax-section">
+                          <div class="tax-section-title">State income tax <span class="auto-tag">AUTO · 2025 tax year</span></div>
+                          <div style="margin-bottom:10px;">
+                            <label for="stateSelect" style="display:block;margin-bottom:5px;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.04em;">State</label>
+                            <select id="stateSelect">
+                            </select>
+                          </div>
+                          <div class="inputs" id="stateRateFields">
+                            <div class="field">
+                              <label for="stateRate">Effective rate %</label>
+                              <input id="stateRate" type="number" inputmode="decimal" step="0.01" placeholder="—" readonly>
+                            </div>
+                            <div class="field">
+                              <label for="stateMarginal">Marginal bracket %</label>
+                              <input id="stateMarginal" type="number" inputmode="decimal" step="0.01" placeholder="—" readonly>
+                            </div>
+                          </div>
+                          <div class="bracket-info" id="stateBracketInfo">
+                            <span id="stateBracketDesc">—</span>
+                          </div>
+                        </div>
+            
+                        <!-- FICA -->
+                        <div class="tax-section">
+                          <div class="tax-section-title">FICA</div>
+                          <div class="inputs">
+                            <div class="field">
+                              <label for="ssRate">Social Security %</label>
+                              <input id="ssRate" type="number" inputmode="decimal" step="0.01" value="6.2">
+                            </div>
+                            <div class="field">
+                              <label for="medicareRate">Medicare %</label>
+                              <input id="medicareRate" type="number" inputmode="decimal" step="0.01" value="1.45">
+                            </div>
+                          </div>
+                        </div>
+            
+                        <!-- Pre-tax deductions -->
+                        <div class="inputs" style="margin-top:10px;">
+                          <div class="field">
+                            <label for="preTax401k">401(k) contribution %</label>
+                            <input id="preTax401k" type="number" inputmode="decimal" step="0.5" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="hsaEmployee">HSA employee contribution ($)</label>
+                            <input id="hsaEmployee" type="number" inputmode="decimal" step="100" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="healthPremiums">Pre-tax health premiums ($)</label>
+                            <input id="healthPremiums" type="number" inputmode="decimal" step="100" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="localTaxRate">Local tax %</label>
+                            <input id="localTaxRate" type="number" inputmode="decimal" step="0.01" placeholder="">
+                          </div>
+                          <div class="field full">
+                            <label for="payFrequency">Pay frequency <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+                            <select id="payFrequency">
+                              <option value="" selected>── SELECT ──</option>
+                              <option value="weekly">Weekly (52/yr)</option>
+                              <option value="biweekly">Biweekly (26/yr)</option>
+                              <option value="semimonthly">Semimonthly (24/yr)</option>
+                              <option value="monthly">Monthly (12/yr)</option>
+                            </select>
+                          </div>
+                        </div>
+                      
+                      </div>
+                    </div>
+          </div>
+
+          <div class="ops-column">
+            <div class="panel">
+                      <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('schedule')">
+                        <div class="panel-title">Schedule</div>
+                        <div id="scheduleToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+                      </div>
+                      <div class="panel-body" id="schedulePanelBody">
+                        <div class="inputs" style="margin-bottom:10px;">
+                          <div class="field full">
+                            <label for="schedulePreset">Schedule preset</label>
+                            <select id="schedulePreset">
+                              <option value="" selected>── SELECT ──</option>
+                              <option value="custom">Custom</option>
+                              <option value="3434">3/4/4/3 — 12hr shifts</option>
+                              <option value="5x8">5×8 — 8hr shifts</option>
+                              <option value="4x10">4×10 — 10hr shifts</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="inputs">
+                          <div class="field">
+                            <label for="shiftLength">Shift length (hrs)</label>
+                            <input id="shiftLength" type="number" inputmode="decimal" step="0.25" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="annualShifts">Shifts per year</label>
+                            <input id="annualShifts" type="number" inputmode="decimal" step="1" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="annualHours">Annual hours</label>
+                            <input id="annualHours" type="number" inputmode="decimal" step="1" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="otHours">OT hours per year</label>
+                            <input id="otHours" type="number" inputmode="decimal" step="1" placeholder="">
+                          </div>
+                        </div>
+                      
+                      </div>
+                    </div>
+            <div class="panel">
+                      <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('pay')">
+                        <div class="panel-title">Pay</div>
+                        <div id="payToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+                      </div>
+                      <div class="panel-body" id="payPanelBody">
+                        <div class="inputs">
+                          <div class="field">
+                            <label for="payType">Pay type</label>
+                            <select id="payType">
+                              <option value="" selected>── SELECT ──</option>
+                              <option value="hourly">Hourly</option>
+                              <option value="salary">Salary</option>
+                            </select>
+                          </div>
+                          <div class="field">
+                            <label for="baseRate" id="baseRateLabel">Pay rate ($)</label>
+                            <input id="baseRate" type="number" inputmode="decimal" step="0.01" placeholder="" disabled style="opacity:.45;cursor:not-allowed;">
+                          </div>
+                          <div class="field">
+                            <label for="diffType">Differential type</label>
+                            <select id="diffType">
+                              <option value="percent" selected>Percent %</option>
+                              <option value="flat">Flat $/hr</option>
+                            </select>
+                          </div>
+                          <div class="field">
+                            <label for="diffValue" id="diffValueLabel">Shift differential (%)</label>
+                            <input id="diffValue" type="number" inputmode="decimal" step="1" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="otMultiplier">OT multiplier</label>
+                            <input id="otMultiplier" type="number" inputmode="decimal" step="0.5" value="1.5">
+                          </div>
+                          <div class="field">
+                            <label for="holidayHours">Holiday(s) worked in hours</label>
+                            <input id="holidayHours" type="number" inputmode="decimal" step="1" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="holidayPremium">Holiday premium multiplier</label>
+                            <input id="holidayPremium" type="number" inputmode="decimal" step="0.5" placeholder="" title="Use 1.5 for time-and-a-half holiday pay. Calculator adds only the extra premium above normal pay.">
+                          </div>
+                          <div class="field">
+                            <label for="oncallPay">On-call / stipend (annual $)</label>
+                            <input id="oncallPay" type="number" inputmode="decimal" step="100" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="bonusType">Bonus type</label>
+                            <select id="bonusType">
+                              <option value="flat" selected>Flat amount</option>
+                              <option value="percent">% of base salary</option>
+                            </select>
+                          </div>
+                          <div class="field full">
+                            <label for="annualBonus" id="annualBonusLabel">Annual bonus ($)</label>
+                            <input id="annualBonus" type="number" inputmode="decimal" step="100" placeholder="">
+                          </div>
+                          <div class="field full">
+                            <label for="signOn">Sign-on bonus ($)</label>
+                            <input id="signOn" type="number" inputmode="decimal" step="100" placeholder="">
+                          </div>
+                        </div>
+                      
+                      </div>
+                    </div>
+            <div class="panel">
+                      <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('equity')">
+                        <div class="panel-title">Equity / Employer Value</div>
+                        <div id="equityToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+                      </div>
+                      <div class="panel-body" id="equityPanelBody">
+                        <div class="inputs">
+                          <div class="field">
+                            <label for="matchAnnual">401(k) employer match ($)</label>
+                            <input id="matchAnnual" type="number" inputmode="decimal" step="100" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="hsaEmployer">HSA employer contribution ($)</label>
+                            <input id="hsaEmployer" type="number" inputmode="decimal" step="100" placeholder="">
+                          </div>
+                          <div class="field">
+                            <label for="otherBenefits">Annual perks / stipends ($)</label>
+                            <input id="otherBenefits" type="number" inputmode="decimal" step="100" placeholder="" title="Tuition reimbursement, transit, gym, cell, etc.">
+                          </div>
+                          <div class="field">
+                            <label for="otherEquity">Other equity / profit-sharing ($)</label>
+                            <input id="otherEquity" type="number" inputmode="decimal" step="100" placeholder="" title="Startup equity, profit sharing, or non-RSU annual equity estimate.">
+                          </div>
+                        </div>
+                      
+                      </div>
+                    </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT PANEL -->
+      <section class="dashboard-main">
+        <div class="panel" style="margin-bottom:12px;">
+          <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('summary')">
+            <div class="panel-title">Summary</div>
+            <div id="summaryToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+          </div>
+          <div class="panel-body" id="summaryPanelBody">
+            <div class="summary-cards top-metrics">
+              <div class="card" style="--card-accent:var(--blue)">
+                <div class="label">Recurring gross pay</div>
+                <div id="cardRecurringGross" class="value blue">—</div>
+                <div class="note">Hourly + differentials + OT<br>(excludes bonus & RSU)</div>
+              </div>
+              <div class="card" style="--card-accent:var(--green)">
+                <div class="label">Est. take-home pay</div>
+                <div id="cardRecurringNet" class="value green">—</div>
+                <div class="note">After taxes & deductions<br>(excludes RSU)</div>
+              </div>
+              <div class="card" style="--card-accent:var(--violet)">
+                <div class="label">Recurring add-ons</div>
+                <div id="cardTotalComp" class="value violet">—</div>
+                <div class="note">Bonus + RSU + 401k match +<br>HSA + equity + perks (annualized)</div>
+              </div>
+              <div class="card compact-rate-card" style="--card-accent:var(--amber)">
+                <div class="label">Rate view</div>
+                <div class="rate-lines">
+                  <div><span>Monthly gross</span><strong id="cardMonthlyGross" class="amber">—</strong></div>
+                  <div><span>Monthly net</span><strong id="cardMonthlyNet" class="teal">—</strong></div>
+                  <div><span id="paycheckLabel">Per paycheck net</span><strong id="cardPaycheckNet" class="green">—</strong></div>
+                  <div><span>Straight rate</span><strong id="cardStraightRate" class="cyan">—</strong></div>
+                  <div><span>Gross rate</span><strong id="cardGrossRate" class="blue">—</strong></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-stack dashboard-stack-left">
+          <div class="panel comp-panel">
+            <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('breakdown')">
+              <div class="panel-title">Compensation breakdown (annualized)</div>
+              <div id="breakdownToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+            </div>
+            <div class="panel-body" id="breakdownPanelBody">
+              <table class="breakdown-table">
+                <thead>
+                  <tr><th>Component</th><th>Amount</th><th>% of total comp</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><span class="dot base-bg"></span>Base salary</td><td id="basePay">—</td><td id="basePayPct">—</td></tr>
+                  <tr><td><span class="dot differential-bg"></span>Shift differential</td><td id="diffPay">—</td><td id="diffPayPct">—</td></tr>
+                  <tr><td><span class="dot ot-bg"></span>Overtime premium</td><td id="otPay">—</td><td id="otPayPct">—</td></tr>
+                  <tr><td><span class="dot holiday-bg"></span>Holiday premium</td><td id="holidayPay">—</td><td id="holidayPayPct">—</td></tr>
+                  <tr><td><span class="dot oncall-bg"></span>On-call / stipend</td><td id="oncallOut">—</td><td id="oncallPct">—</td></tr>
+                  <tr><td><span class="dot bonus-bg"></span>Annual bonus</td><td id="bonusOut">—</td><td id="bonusPct">—</td></tr>
+                  <tr><td><span class="dot signon-bg"></span>Sign-on <span style="color:var(--amber);font-size:9px;">(1st yr only)</span></td><td id="signOnOut">—</td><td style="color:var(--muted)">—</td></tr>
+                  <tr><td><span class="dot rsu-bg"></span>RSU (annualized)</td><td id="rsuAnnualOut">—</td><td id="rsuPct">—</td></tr>
+                  <tr><td><span class="dot match-bg"></span>401(k) employer match</td><td id="matchOut">—</td><td id="matchPct">—</td></tr>
+                  <tr><td><span class="dot hsa-bg"></span>HSA employer contribution</td><td id="hsaEmployerOut">—</td><td id="hsaEmployerPct">—</td></tr>
+                  <tr><td><span class="dot other-equity-bg"></span>Other equity / profit-sharing</td><td id="otherEquityOut">—</td><td id="otherEquityPct">—</td></tr>
+                  <tr><td><span class="dot perks-bg"></span>Other benefits / perks</td><td id="otherBenefitsOut">—</td><td id="otherBenefitsPct">—</td></tr>
+                  <tr class="total-row"><td>Total</td><td id="totalComp">—</td><td id="totalCompPct">—</td></tr>
+                </tbody>
+              </table>
+              <div class="hidden-legacy-values" aria-hidden="true">
+                <span id="recurringGross">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel tax-panel">
+            <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('taxsummary')">
+              <div class="panel-title">Tax & deduction summary (est.)</div>
+              <div id="taxsummaryToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+            </div>
+            <div class="panel-body" id="taxsummaryPanelBody">
+              <table class="summary-table">
+                <tbody>
+                  <tr><td>Federal income tax</td><td id="fedTax">—</td></tr>
+                  <tr><td>State income tax</td><td id="stateTax">—</td></tr>
+                  <tr><td>Local income tax</td><td id="localTax">—</td></tr>
+                  <tr><td>FICA (Social Security)</td><td id="ssTax">—</td></tr>
+                  <tr><td>FICA (Medicare)</td><td id="medTax">—</td></tr>
+                  <tr><td>401(k) contribution</td><td id="k401Out">—</td></tr>
+                  <tr><td>HSA + health premiums</td><td id="preTaxOut">—</td></tr>
+                  <tr><td>Annual recurring net</td><td id="recurringNet">—</td></tr>
+                  <tr><td>Estimated paycheck net</td><td id="paycheckNet">—</td></tr>
+                  <tr class="total-row red-total"><td>Total taxes & deductions</td><td id="totalDeductionsOut">—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- RSU VESTING PANEL -->
+          </div>
+
+          <div class="dashboard-stack dashboard-stack-right">
+          <div class="panel cashflow-panel">
+            <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('chart')">
+              <div class="panel-title">Compensation mix (est.)</div>
+              <div id="chartToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+            </div>
+            <div class="panel-body" id="chartPanelBody">
+
+              <div class="chart-toolbar">
+                <div>
+                  <div class="chart-total-label">Total comp (incl. sign-on)</div>
+                  <div class="chart-total-value" id="chartTotalComp">—</div>
+                </div>
+                <label class="chart-type-control" for="chartType">
+                  <span>Chart</span>
+                  <select id="chartType" class="compact-select">
+                    <option value="stacked">Stacked bar</option>
+                    <option value="donut">Donut</option>
+                    <option value="waterfall">Waterfall</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="chart-view stacked-chart-view is-active" id="stackedChartView">
+                <div class="stacked-bar-wrap">
+                  <div class="stacked-bar" id="stackedBar">
+                    <div class="stacked-bar-empty">Enter values to see breakdown</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-view donut-chart-view" id="donutChartView">
+                <div class="donut-layout">
+                  <div class="donut-canvas-wrap">
+                    <canvas id="donutCanvas" class="donut-canvas" aria-label="Donut chart showing compensation mix"></canvas>
+                    <div class="donut-center" aria-hidden="true">
+                      <div class="donut-center-label">Total</div>
+                      <div class="donut-center-value" id="donutCenterValue">—</div>
+                      <div class="donut-center-sub" id="donutCenterSub">Enter values</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-view" id="waterfallChartView">
+                <div id="waterfallEmpty" style="padding:24px 0;text-align:center;color:var(--muted);font-size:11px;">Enter values to see waterfall</div>
+                <canvas id="waterfallCanvas" style="width:100%;display:none;" aria-label="Pay waterfall chart"></canvas>
+              </div>
+
+              <!-- Tooltip -->
+              <div id="barTooltip" class="bar-tooltip" style="display:none;"></div>
+
+              <!-- Legend -->
+              <div id="cashFlowLegend" class="cashflow-legend stacked-legend"></div>
+
+
+            </div>
+          </div>
+
+          <div class="panel rsu-panel">
+            <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('rsu')">
+              <div class="panel-title">RSU vesting (estimated value)</div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <select id="rsuScheduleSelect" class="compact-select" onclick="event.stopPropagation()">
+                  <option value="">── select ──</option>
+                  <option value="msft">Microsoft (4-year)</option>
+                  <option value="amzn">Amazon (4-year)</option>
+                  <option value="meta">Meta (4-year)</option>
+                  <option value="goog">Google / Apple (4-year)</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <div id="rsuToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              </div>
+            </div>
+            <div class="panel-body" id="rsuPanelBody">
+
+              <div class="rsu-company-row compact-rsu-pills">
+                <div class="rsu-co-pill" data-co="msft">MSFT</div>
+                <div class="rsu-co-pill" data-co="amzn">AMZN</div>
+                <div class="rsu-co-pill" data-co="meta">META</div>
+                <div class="rsu-co-pill" data-co="goog">GOOG / AAPL</div>
+                <div class="rsu-co-pill" data-co="custom">Custom</div>
+              </div>
+
+              <!-- RSU inputs inline — replaces description box -->
+              <div class="inputs" style="margin-bottom:12px;">
+                <div class="field">
+                  <label for="rsuGrant">RSU grant ($)</label>
+                  <input id="rsuGrant" type="number" inputmode="decimal" step="500" placeholder="" min="0">
+                </div>
+                <div class="field">
+                  <label for="rsuYears">Vest years</label>
+                  <input id="rsuYears" type="number" inputmode="decimal" step="1" placeholder="" min="1" max="10">
+                </div>
+              </div>
+
+              <div class="rsu-custom-inputs" id="rsuCustomInputs" style="display:none;">
+                <!-- populated dynamically by renderRsu based on vest years -->
+              </div>
+
+              <div class="rsu-canvas-wrap">
+                <canvas id="rsuChart" style="width:100%;max-width:100%;height:auto;display:block;" aria-label="RSU vesting by year"></canvas>
+              </div>
+
+              <div class="rsu-table-wrap">
+                <table class="summary-table">
+                  <thead><tr><th>Year</th><th>Vested %</th><th>Vested value</th><th>Progress (cumulative)</th></tr></thead>
+                  <tbody id="rsuTableRows"></tbody>
+                </table>
+              </div>
+
+            </div>
+          </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer style="margin-top:20px;padding:14px 0 8px;border-top:1px solid rgba(26,40,64,.6);text-align:center;">
+      <p style="margin:0;font-size:10px;color:var(--text);text-transform:none;letter-spacing:.02em;line-height:1.6;">
+        Estimates only — not financial or tax advice. &nbsp;Federal and state tax tables use 2025 values. &nbsp;Actual payroll withholding varies by W-4, benefits elections, local taxes, and employer policy.
+      </p>
+    </footer>
+  </main>
+
+  <script>
+    // ─── 2025 FEDERAL BRACKETS (2025 tax year, filed 2026) ────────────────────
+    const FED_STD_DEDUCTION = { single: 15000, mfj: 30000, mfs: 15000, hoh: 22500 };
+    const FED_BRACKETS = {
+      single: [[0,.10],[11925,.12],[48475,.22],[103350,.24],[197300,.32],[250525,.35],[626350,.37]],
+      mfj:    [[0,.10],[23850,.12],[96950,.22],[206700,.24],[394600,.32],[501050,.35],[751600,.37]],
+      mfs:    [[0,.10],[11925,.12],[48475,.22],[103350,.24],[197300,.32],[250525,.35],[375800,.37]],
+      hoh:    [[0,.10],[17000,.12],[64850,.22],[103350,.24],[197300,.32],[250500,.35],[626350,.37]]
+    };
+
+    // ─── ALL 50 STATES + DC (2025 tax year) ───────────────────────────────────
+    // Format: { name, type: "none"|"flat"|"brackets", rate?, stdDed?, brackets?, note }
+    // stdDed: { single, mfj } — used where applicable
+    // brackets: [[threshold, rate], ...]  income above threshold taxed at rate
+    const STATE_TAX = {
+      AL: { name:"Alabama",        type:"brackets", stdDed:{single:3000,mfj:8500}, brackets:[[0,.02],[500,.04],[3000,.05]] },
+      AK: { name:"Alaska",         type:"none",     note:"No state income tax" },
+      AZ: { name:"Arizona",        type:"flat",     rate:.025, note:"2.5% flat rate" },
+      AR: { name:"Arkansas",       type:"brackets", stdDed:{single:2200,mfj:4400}, brackets:[[0,.02],[4999,.04],[8999,.044]] },
+      CA: { name:"California",     type:"brackets", stdDed:{single:5202,mfj:10404}, brackets:[[0,.01],[10412,.02],[24684,.04],[38959,.06],[54081,.08],[68350,.093],[349137,.103],[418961,.113],[698274,.123],[1000000,.133]] },
+      CO: { name:"Colorado",       type:"flat",     rate:.044, note:"4.4% flat rate" },
+      CT: { name:"Connecticut",    type:"brackets", stdDed:{single:15000,mfj:24000}, brackets:[[0,.03],[10000,.05],[50000,.055],[100000,.06],[200000,.065],[250000,.069],[500000,.0699]] },
+      DE: { name:"Delaware",       type:"brackets", stdDed:{single:3250,mfj:6500}, brackets:[[0,0],[2000,.022],[5000,.039],[10000,.048],[20000,.052],[25000,.0555],[60000,.066]] },
+      FL: { name:"Florida",        type:"none",     note:"No state income tax" },
+      GA: { name:"Georgia",        type:"flat",     rate:.055, note:"5.49% flat (phasing to 4.99%)" },
+      HI: { name:"Hawaii",         type:"brackets", stdDed:{single:2200,mfj:4400}, brackets:[[0,.014],[2400,.032],[4800,.055],[9600,.064],[14400,.068],[19200,.072],[24000,.076],[36000,.079],[48000,.0825],[150000,.09],[175000,.10],[200000,.11]] },
+      ID: { name:"Idaho",          type:"flat",     rate:.058, note:"5.8% flat rate" },
+      IL: { name:"Illinois",       type:"flat",     rate:.0495, note:"4.95% flat rate" },
+      IN: { name:"Indiana",        type:"flat",     rate:.0305, note:"3.05% flat rate" },
+      IA: { name:"Iowa",           type:"flat",     rate:.057, note:"5.7% flat (phasing down)" },
+      KS: { name:"Kansas",         type:"brackets", stdDed:{single:3500,mfj:8000}, brackets:[[0,.031],[15000,.057],[30000,.057]] },
+      KY: { name:"Kentucky",       type:"flat",     rate:.04, note:"4.0% flat rate" },
+      LA: { name:"Louisiana",      type:"brackets", stdDed:{single:4500,mfj:9000}, brackets:[[0,.0185],[12500,.035],[50000,.0425]] },
+      ME: { name:"Maine",          type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,.058],[24500,.0675],[58050,.0715]] },
+      MD: { name:"Maryland",       type:"brackets", stdDed:{single:2400,mfj:4850}, brackets:[[0,.02],[1000,.03],[2000,.04],[3000,.0475],[100000,.05],[125000,.0525],[150000,.055],[250000,.0575]] },
+      MA: { name:"Massachusetts",  type:"flat",     rate:.05, note:"5.0% flat (9% on income >$1M)" },
+      MI: { name:"Michigan",       type:"flat",     rate:.0425, note:"4.25% flat rate" },
+      MN: { name:"Minnesota",      type:"brackets", stdDed:{single:14575,mfj:29150}, brackets:[[0,.0535],[30070,.068],[98760,.0785],[183340,.0985]] },
+      MS: { name:"Mississippi",    type:"flat",     rate:.047, note:"4.7% flat (phasing to 4%)" },
+      MO: { name:"Missouri",       type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,0],[1207,.02],[2414,.025],[3621,.03],[4828,.035],[6035,.04],[7242,.045],[8432,.05],[9639,.054]] },
+      MT: { name:"Montana",        type:"brackets", stdDed:{single:5540,mfj:11080}, brackets:[[0,.01],[3600,.02],[6300,.03],[9700,.04],[13000,.05],[16800,.06],[21600,.0675]] },
+      NE: { name:"Nebraska",       type:"brackets", stdDed:{single:7900,mfj:15800}, brackets:[[0,.0246],[3700,.0351],[22170,.0501],[32210,.0664]] },
+      NV: { name:"Nevada",         type:"none",     note:"No state income tax" },
+      NH: { name:"New Hampshire",  type:"none",     note:"No tax on wages (interest/dividends only)" },
+      NJ: { name:"New Jersey",     type:"brackets", stdDed:{single:0,mfj:0}, brackets:[[0,.014],[20000,.0175],[35000,.035],[40000,.05526],[75000,.0637],[500000,.0897],[1000000,.1075]] },
+      NM: { name:"New Mexico",     type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,.015],[5500,.032],[11000,.047],[16000,.049],[210000,.059]] },
+      NY: { name:"New York",       type:"brackets", stdDed:{single:8000,mfj:16050}, brackets:[[0,.04],[8500,.045],[11700,.0525],[13900,.059],[80650,.0633],[215400,.0685],[1077550,.0965],[5000000,.103],[25000000,.109]] },
+      NC: { name:"North Carolina", type:"flat",     rate:.045, note:"4.5% flat rate" },
+      ND: { name:"North Dakota",   type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,.0195],[44725,.0295]] },
+      OH: { name:"Ohio",           type:"brackets", stdDed:{single:0,mfj:0}, brackets:[[0,0],[26050,.0275],[100000,.0357]] },
+      OK: { name:"Oklahoma",       type:"brackets", stdDed:{single:6350,mfj:12700}, brackets:[[0,.0025],[1000,.0075],[2500,.0175],[3750,.0275],[4900,.0375],[7200,.0475]] },
+      OR: { name:"Oregon",         type:"brackets", stdDed:{single:2420,mfj:4840}, brackets:[[0,.0475],[10000,.0675],[125000,.0875],[250000,.099]] },
+      PA: { name:"Pennsylvania",   type:"flat",     rate:.0307, note:"3.07% flat rate" },
+      RI: { name:"Rhode Island",   type:"brackets", stdDed:{single:10550,mfj:21150}, brackets:[[0,.0375],[77450,.0475],[176050,.0599]] },
+      SC: { name:"South Carolina", type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,0],[3460,.03],[17330,.064]] },
+      SD: { name:"South Dakota",   type:"none",     note:"No state income tax" },
+      TN: { name:"Tennessee",      type:"none",     note:"No tax on wages" },
+      TX: { name:"Texas",          type:"none",     note:"No state income tax" },
+      UT: { name:"Utah",           type:"flat",     rate:.0465, note:"4.65% flat rate" },
+      VT: { name:"Vermont",        type:"brackets", stdDed:{single:7000,mfj:14000}, brackets:[[0,.0335],[45400,.066],[110050,.076],[229550,.0875]] },
+      VA: { name:"Virginia",       type:"brackets", stdDed:{single:8000,mfj:16000}, brackets:[[0,.02],[3000,.03],[5000,.05],[17000,.0575]] },
+      WA: { name:"Washington",     type:"none",     note:"No state income tax" },
+      WV: { name:"West Virginia",  type:"brackets", stdDed:{single:0,mfj:0}, brackets:[[0,.0236],[10000,.0315],[25000,.0236]] },
+      WI: { name:"Wisconsin",      type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,.035],[14320,.044],[28640,.053],[315310,.0765]] },
+      WY: { name:"Wyoming",        type:"none",     note:"No state income tax" },
+      DC: { name:"Washington D.C.",type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,.04],[10000,.06],[40000,.065],[60000,.085],[250000,.0925],[500000,.0975],[1000000,.1075]] }
+    };
+
+    const SS_WAGE_BASE = 176100;
+
+    // Gradient pairs: [dark L:28%, bright L:58%] with randomized S:50-75%
+    const COLOR_MAP = {
+      base:        { dark:"#0c6b3d", bright:"#14b864" },  /* 150° S:72% — rich emerald */
+      differential:{ dark:"#194776", bright:"#4e94da" },  /* 210° S:65% */
+      holiday:     { dark:"#6f2020", bright:"#cf5959" },  /* 0°   S:55% */
+      oncall:      { dark:"#601579", bright:"#b949df" },  /* 285° S:70% */
+      ot:          { dark:"#6d5a22", bright:"#ccb05c" },  /* 45°  S:52% */
+      bonus:       { dark:"#701f47", bright:"#d15794" },  /* 330° S:57% */
+      rsu:         { dark:"#181877", bright:"#4c4cdc" },  /* 240° S:67% */
+      signon:      { dark:"#6d4722", bright:"#cc945c" },  /* 30°  S:52% */
+      match:       { dark:"#147b7b", bright:"#47e1e1" },  /* 180° S:72% */
+      hsa:         { dark:"#477c13", bright:"#94e345" },  /* 90°  S:74% */
+      otherEquity: { dark:"#6c236c", bright:"#cb5dcb" },  /* 300° S:51% */
+      perks:       { dark:"#226d22", bright:"#5bcd5b" }   /* 120° S:53% */
+    };
+
+    // ─── BRACKET MATH ─────────────────────────────────────────────────────────
+    function calcBracketTax(income, brackets) {
+      if (income <= 0) return { tax: 0, marginalRate: brackets[0][1] };
+      let tax = 0, marginalRate = brackets[0][1];
+      for (let i = 0; i < brackets.length; i++) {
+        const floor = brackets[i][0], rate = brackets[i][1];
+        const ceil = i + 1 < brackets.length ? brackets[i+1][0] : Infinity;
+        if (income <= floor) break;
+        tax += (Math.min(income, ceil) - floor) * rate;
+        if (income > floor) marginalRate = rate;
+      }
+      return { tax, marginalRate };
+    }
+
+    function calcFederal(grossIncome, filing) {
+      const deduction = FED_STD_DEDUCTION[filing] || FED_STD_DEDUCTION.single;
+      const taxable   = Math.max(grossIncome - deduction, 0);
+      const brackets  = FED_BRACKETS[filing] || FED_BRACKETS.single;
+      const { tax, marginalRate } = calcBracketTax(taxable, brackets);
+      return { tax, effectiveRate: grossIncome > 0 ? tax/grossIncome : 0, marginalRate, taxable };
+    }
+
+    function calcState(grossIncome, filing, stateCode) {
+      const s = STATE_TAX[stateCode];
+      if (!s || s.type === "none") return { tax: 0, effectiveRate: 0, marginalRate: 0, taxable: 0, note: s ? s.note : "Unknown state" };
+      if (s.type === "flat") {
+        const tax = grossIncome * s.rate;
+        return { tax, effectiveRate: s.rate, marginalRate: s.rate, taxable: grossIncome, note: s.note };
+      }
+      // brackets
+      const ded = s.stdDed ? (filing === "mfj" ? s.stdDed.mfj : s.stdDed.single) : 0;
+      const taxable = Math.max(grossIncome - ded, 0);
+      const { tax, marginalRate } = calcBracketTax(taxable, s.brackets);
+      return { tax, effectiveRate: grossIncome > 0 ? tax/grossIncome : 0, marginalRate, taxable, note: null };
+    }
+
+    // ─── STATE ────────────────────────────────────────────────────────────────
+    let filingStatus  = "";
+    let selectedState = "";
+
+    // Populate state dropdown
+    function buildStateSelect() {
+      const sel = document.getElementById("stateSelect");
+      sel.innerHTML = '<option value="" selected>── SELECT ──</option><option value="custom">Custom state rate</option>';
+      Object.entries(STATE_TAX)
+        .sort((a,b) => a[0].localeCompare(b[0]))
+        .forEach(([code, s]) => {
+          const opt = document.createElement("option");
+          opt.value = code;
+          opt.textContent = code + (s.type === "none" ? " — no income tax" : "");
+          sel.appendChild(opt);
+        });
+      sel.addEventListener("change", () => { selectedState = sel.value; calc(); });
+    }
+
+    const scheduleIds = ["shiftLength","annualShifts","annualHours","otHours"];
+
+    // ─── PRESETS ──────────────────────────────────────────────────────────────
+    const schedulePresets = {
+      "3434": { shiftLength:12, annualShifts:182, annualHours:2184, otHours:208 },
+      "5x8":  { shiftLength:8,  annualShifts:260, annualHours:2080, otHours:0 },
+      "4x10": { shiftLength:10, annualShifts:208, annualHours:2080, otHours:0 }
+    };
+
+    const blankDefaults = {
+      shiftLength:"", annualShifts:"", annualHours:"", otHours:"",
+      baseRate:"", diffValue:"", otMultiplier:"1.5",
+      holidayHours:"", holidayPremium:"", oncallPay:"", annualBonus:"",
+      signOn:"", rsuGrant:"", rsuYears:"",
+      matchAnnual:"", hsaEmployer:"", otherBenefits:"", otherEquity:"",
+      ssRate:"6.2", medicareRate:"1.45", preTax401k:"", hsaEmployee:"", healthPremiums:"", localTaxRate:""
+    };
+
+    // ─── HELPERS ──────────────────────────────────────────────────────────────
+    function gv(id) {
+      const el = document.getElementById(id);
+      if (!el) return 0;
+      if (el.tagName === "SELECT") return el.value;
+      return Number(el.value) || 0;
+    }
+
+    function money(v) {
+      return new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0 }).format(v);
+    }
+    function money2(v) {
+      return new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
+    }
+    function pct(v, d=2) { return v.toFixed(d) + "%"; }
+    function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+    function hasGross() { return gv("baseRate") > 0 && gv("annualHours") > 0; }
+    function hasFederalSelection() { return ["single","mfj","mfs","hoh","custom"].includes(filingStatus); }
+    function hasStateSelection() { return selectedState !== ""; }
+    function hasValue(id) {
+      const el = document.getElementById(id);
+      return !!el && String(el.value).trim() !== "";
+    }
+    function getPayPeriods(freq) {
+      if (freq === "weekly") return 52;
+      if (freq === "semimonthly") return 24;
+      if (freq === "monthly") return 12;
+      return 26;
+    }
+    let dismissedWarningSignature = "";
+
+    function dismissWarnings() {
+      const panel = document.getElementById("warningPanel");
+      if (!panel) return;
+      dismissedWarningSignature = panel.dataset.signature || "";
+      panel.style.display = "none";
+    }
+
+    function renderWarnings(warnings) {
+      const panel = document.getElementById("warningPanel");
+      if (!panel) return;
+      const signature = warnings.join("|");
+
+      if (!warnings.length || !hasGross()) {
+        panel.style.display = "none";
+        panel.innerHTML = "";
+        panel.dataset.signature = "";
+        return;
+      }
+
+      panel.dataset.signature = signature;
+      if (dismissedWarningSignature === signature) {
+        panel.style.display = "none";
+        return;
+      }
+
+      panel.style.display = "block";
+      panel.innerHTML = `<button class="warning-dismiss" type="button" onclick="dismissWarnings()" aria-label="Dismiss review assumptions">×</button><strong>Review assumptions / inputs</strong><ul>${warnings.map(w => `<li>${w}</li>`).join("")}</ul>`;
+    }
+
+    function setLabelText(label, text) {
+      if (!label) return;
+      const help = Array.from(label.children).find(child => child.classList && child.classList.contains("help-tip"));
+      label.textContent = text;
+      if (help) label.appendChild(help);
+    }
+
+    const HELP_TARGETS = [
+      { selector:'label[for="filingSelect"]',  text:"How you file taxes — affects your deductions and brackets." },
+      { selector:'label[for="federalRate"]',   text:"Your average federal rate. Auto-calculated from filing status." },
+      { selector:'label[for="federalMarginal"]',text:"Rate on your highest dollar earned — not your whole income." },
+      { selector:'label[for="stateSelect"]',   text:"Your state for tax estimates. Some states have no income tax." },
+      { selector:'label[for="stateRate"]',     text:"Average state rate. Auto-calculated or enter your own." },
+      { selector:'label[for="stateMarginal"]', text:"State rate on your highest dollar of income." },
+      { selector:'label[for="ssRate"]',        text:"Payroll tax at 6.2% up to $176,100. Employer matches separately." },
+      { selector:'label[for="medicareRate"]',  text:"Payroll tax at 1.45%. High earners over $200K owe 0.9% more." },
+      { selector:'label[for="preTax401k"]',    text:"Your contribution as a % of gross pay. Reduces taxable income." },
+      { selector:'label[for="hsaEmployee"]',   text:"Annual pre-tax HSA contribution. Requires a high-deductible plan." },
+      { selector:'label[for="healthPremiums"]',text:"Annual cost of employer health/dental/vision. Pre-tax." },
+      { selector:'label[for="localTaxRate"]',  text:"City or county wage tax. Common in PA, OH, NYC, MD. Enter 0 if none." },
+      { selector:'label[for="payFrequency"]',  text:"How often you're paid. Only affects the per-paycheck estimate." },
+      { selector:'label[for="schedulePreset"]',text:"Auto-fills shift length and annual hours. Verify against your offer." },
+      { selector:'label[for="shiftLength"]',   text:"Paid hours per shift." },
+      { selector:'label[for="annualShifts"]',  text:"Total shifts worked per year, excluding unpaid time off." },
+      { selector:'label[for="annualHours"]',   text:"Total paid hours per year. Drives all pay calculations." },
+      { selector:'label[for="otHours"]',       text:"Hours per year paid at the overtime rate." },
+      { selector:'label[for="payType"]',       text:"Hourly or salary. Salary is converted to hourly using annual hours." },
+      { selector:'label[for="baseRate"]',      text:"Your base pay before differentials, OT, or bonuses." },
+      { selector:'label[for="diffType"]',      text:"Percent adds % on top of base. Flat adds a fixed $/hr." },
+      { selector:'label[for="diffValue"]',     text:"Extra hourly pay for nights, weekends, or hard-to-fill shifts." },
+      { selector:'label[for="otMultiplier"]',  text:"Overtime rate relative to normal. 1.5 = time-and-a-half." },
+      { selector:'label[for="holidayHours"]',  text:"Total holiday hours worked per year at premium pay." },
+      { selector:'label[for="holidayPremium"]',text:"Holiday pay rate. 1.5 = time-and-a-half. Only the premium is added — base is already counted." },
+      { selector:'label[for="oncallPay"]',     text:"Total annual pay for on-call or standby time." },
+      { selector:'label[for="bonusType"]',     text:"Flat: enter dollars. Percent: enter % of base salary." },
+      { selector:'label[for="annualBonus"]',   text:"Expected recurring annual bonus. Use a conservative estimate." },
+      { selector:'label[for="signOn"]',        text:"One-time first-year bonus. Shown separately — won't repeat." },
+      { selector:'label[for="matchAnnual"]',   text:"What your employer contributes to your 401(k) annually." },
+      { selector:'label[for="hsaEmployer"]',   text:"What your employer deposits into your HSA per year." },
+      { selector:'label[for="otherBenefits"]', text:"Annual value of perks: tuition, transit, phone, gym, etc." },
+      { selector:'label[for="otherEquity"]',   text:"Annual value of non-RSU equity: options, profit sharing, ESPP." },
+      { selector:'label[for="rsuGrant"]',      text:"Total stock grant value at award date. Actual value varies with stock price." },
+      { selector:'label[for="rsuYears"]',      text:"Years until fully vested. Vesting schedule shown below." },
+      { selector:'#summaryPanelBody .card:nth-child(1) .label', text:"Annual gross pay from base, differentials, and OT. Pre-tax, excludes bonus and RSUs." },
+      { selector:'#summaryPanelBody .card:nth-child(2) .label', text:"Estimated annual take-home after taxes and pre-tax deductions." },
+      { selector:'#summaryPanelBody .card:nth-child(3) .label', text:"Bonus, RSU, 401k match, HSA, equity, and perks — annualized. Excludes sign-on." },
+      { selector:'#summaryPanelBody .card:nth-child(4) .label', text:"Monthly, per-paycheck, and effective hourly views of recurring pay." }
+    ];
+
+    const PANEL_HELP = [
+      { starts:"Assumptions", text:"Estimates only — not tax or financial advice." },
+      { starts:"Taxes",       text:"Income tax, payroll tax, and pre-tax deduction inputs." },
+      { starts:"Schedule",   text:"Your work pattern and hours. Drives all hourly pay math." },
+      { starts:"Pay",        text:"Base pay, differentials, OT, holiday, on-call, bonus, and sign-on." },
+      { starts:"Equity",     text:"Employer value beyond wages: 401k match, HSA, perks, and equity." },
+      { starts:"Summary",    text:"Gross pay, take-home, add-ons, and rate views at a glance." },
+      { starts:"Compensation breakdown", text:"Where your total estimate comes from, component by component." },
+      { starts:"Tax & deduction summary", text:"What's being taken out — taxes and pre-tax deductions." },
+      { starts:"Compensation mix", text:"Visual split of total comp. Sign-on included in chart view only." },
+      { starts:"RSU vesting", text:"Estimated vesting by year. Value depends on stock price at vest date." }
+    ];
+
+    const OUTPUT_HELP = {
+      basePay:          "Base rate × annual hours.",
+      diffPay:          "Annual value of your shift differential.",
+      otPay:            "Extra OT premium only — base hours are already counted.",
+      holidayPay:       "Extra holiday premium only — base hours are already counted.",
+      oncallOut:        "Annual on-call or standby pay.",
+      bonusOut:         "Recurring annual bonus estimate.",
+      signOnOut:        "One-time. Shown separately — won't repeat after year one.",
+      rsuAnnualOut:     "Grant ÷ vesting years. Actual value depends on stock price.",
+      matchOut:         "Employer 401(k) contribution estimate.",
+      hsaEmployerOut:   "Employer HSA contribution estimate.",
+      otherEquityOut:   "Annual value of non-RSU equity or profit sharing.",
+      otherBenefitsOut: "Annual value of other perks and stipends.",
+      totalComp:        "All recurring add-ons. Sign-on excluded — it's one-time.",
+      fedTax:           "Estimated federal income tax on recurring taxable pay.",
+      stateTax:         "Estimated state income tax on recurring taxable pay.",
+      localTax:         "Estimated local income tax, if entered.",
+      ssTax:            "Estimated Social Security payroll tax.",
+      medTax:           "Estimated Medicare payroll tax.",
+      k401Out:          "Your estimated annual 401(k) contribution.",
+      preTaxOut:        "HSA contribution plus pre-tax health premiums.",
+      recurringNet:     "Estimated annual take-home from recurring pay.",
+      paycheckNet:      "Estimated per-paycheck take-home. Requires pay frequency.",
+      totalDeductionsOut:"Total taxes plus pre-tax deductions."
+    };
+
+    function addHelpTip(el, text) {
+      if (!el || Array.from(el.children).some(child => child.classList && child.classList.contains("help-tip"))) return;
+      const tip = document.createElement("span");
+      tip.className = "help-tip";
+      tip.setAttribute("aria-label", "Help: " + text);
+      tip.innerHTML = `?<span class="help-pop" role="tooltip">${text}</span>`;
+      tip.addEventListener("click", e => {
+        e.preventDefault();
+        e.stopPropagation();
+        document.querySelectorAll(".help-tip.is-open").forEach(openTip => {
+          if (openTip !== tip) openTip.classList.remove("is-open");
+        });
+        tip.classList.toggle("is-open");
+      });
+      el.appendChild(tip);
+    }
+
+    function attachHelpTips() {
+      HELP_TARGETS.forEach(({ selector, text }) => {
+        document.querySelectorAll(selector).forEach(el => addHelpTip(el, text));
+      });
+
+      PANEL_HELP.forEach(({ starts, text }) => {
+        const title = Array.from(document.querySelectorAll(".panel-title"))
+          .find(el => el.textContent.trim().toLowerCase().startsWith(starts.toLowerCase()));
+        addHelpTip(title, text);
+      });
+
+      Object.entries(OUTPUT_HELP).forEach(([id, text]) => {
+        const rowLabel = document.getElementById(id)?.closest("tr")?.querySelector("td:first-child");
+        addHelpTip(rowLabel, text);
+      });
+    }
+
+    function updateBonusLabel() {
+      const type = document.getElementById("bonusType").value;
+      const label = document.getElementById("annualBonusLabel");
+      if (label) setLabelText(label, type === "percent" ? "Annual bonus (% of base salary)" : "Annual bonus ($)");
+    }
+
+    function updateDifferentialLabel() {
+      const type = document.getElementById("diffType") ? document.getElementById("diffType").value : "";
+      const label = document.getElementById("diffValueLabel");
+      const input = document.getElementById("diffValue");
+      if (label) setLabelText(label, type === "flat" ? "Shift differential ($/hr)" : "Shift differential (%)");
+      if (input) input.step = type === "flat" ? "0.5" : "1";
+    }
+
+    function applyValues(obj) {
+      Object.keys(obj).forEach(k => {
+        const el = document.getElementById(k);
+        if (!el) return;
+        el.value = obj[k];
+      });
+    }
+
+    // ─── MAIN CALC ────────────────────────────────────────────────────────────
+    function calc() {
+      const payType        = document.getElementById("payType") ? document.getElementById("payType").value : "hourly";
+      const payInput       = gv("baseRate");
+      const annualHours    = gv("annualHours");
+      // Convert salary to effective hourly rate; if no hours entered yet, treat salary as base for display
+      const baseRate       = payType === "salary"
+                               ? (annualHours > 0 ? payInput / annualHours : 0)
+                               : payInput;
+      const rawOtHours     = gv("otHours");
+      const otHours        = Math.min(rawOtHours, annualHours);
+      const diffType       = gv("diffType");
+      const diffValue      = gv("diffValue");
+      const diffRate       = diffType === "percent" ? baseRate * diffValue / 100 : (diffType === "flat" ? diffValue : 0);
+      const effectiveRate  = baseRate + diffRate;
+      const otMultiplier   = hasValue("otMultiplier") ? gv("otMultiplier") : 1;
+      const holidayHours   = gv("holidayHours");
+      const holidayMult    = gv("holidayPremium");
+      const oncallPay      = gv("oncallPay");
+      const bonusType      = document.getElementById("bonusType") ? document.getElementById("bonusType").value : "";
+      const bonusInput     = gv("annualBonus");
+      const baseSalary     = baseRate * annualHours;
+      const annualBonus    = bonusType === "percent" ? baseSalary * bonusInput / 100 : (bonusType === "flat" ? bonusInput : 0);
+      const signOn         = gv("signOn");
+      const rsuGrant       = gv("rsuGrant");
+      const rsuYears       = Math.max(gv("rsuYears") || 4, 1);
+      const matchAnnual    = gv("matchAnnual");
+      const hsaEmployer    = gv("hsaEmployer");
+      const otherBenefits  = gv("otherBenefits");
+      const otherEquity    = gv("otherEquity");
+      const ssRate         = (gv("ssRate") || 6.2) / 100;
+      const medicareRate   = (gv("medicareRate") || 1.45) / 100;
+      const preTax401kPct  = gv("preTax401k") / 100;
+      const hsaEmployee    = gv("hsaEmployee");
+      const healthPremiums = gv("healthPremiums");
+      const localTaxRate   = gv("localTaxRate") / 100;
+      const payFrequency   = gv("payFrequency");
+
+      const regularHours   = annualHours - otHours;
+      const basePay        = annualHours * baseRate;
+      const diffPay        = annualHours * diffRate;
+      const straightPay    = regularHours * effectiveRate;
+      const otPayFull      = otHours * effectiveRate * otMultiplier;
+      const otPremium      = otHours * effectiveRate * Math.max(otMultiplier - 1, 0);
+      const holidayPay     = holidayHours * effectiveRate * Math.max(holidayMult - 1, 0);
+      const recurringGross = straightPay + otPayFull + holidayPay + oncallPay;
+      const rsuAnnual      = rsuGrant / rsuYears;
+      // Rewards = annualized recurring add-ons only (sign-on excluded — non-recurring)
+      const totalRewards   = annualBonus + rsuAnnual + matchAnnual + hsaEmployer + otherBenefits + otherEquity;
+      const totalComp      = recurringGross + totalRewards;
+      const chartTotalComp = totalComp + signOn;
+
+      const preTax401k     = recurringGross * preTax401kPct;
+      const incomeTaxBase  = Math.max(recurringGross - preTax401k - hsaEmployee - healthPremiums, 0);
+
+      const fedRateEl = document.getElementById("federalRate");
+      const fedMargEl = document.getElementById("federalMarginal");
+      const stateRateEl  = document.getElementById("stateRate");
+      const stateMargEl  = document.getElementById("stateMarginal");
+      const stateRateFields = document.getElementById("stateRateFields");
+
+      let fedCalc = { tax: 0, effectiveRate: 0, marginalRate: 0, taxable: 0 };
+      if (hasGross() && hasFederalSelection()) {
+        if (filingStatus === "custom") {
+          const customFedRate = gv("federalRate") / 100;
+          fedCalc = { tax: incomeTaxBase * customFedRate, effectiveRate: customFedRate, marginalRate: customFedRate, taxable: incomeTaxBase };
+          if (fedRateEl) { fedRateEl.readOnly = false; fedRateEl.classList.add("auto-filled"); }
+          if (fedMargEl) { fedMargEl.readOnly = false; fedMargEl.value = fedRateEl && fedRateEl.value ? fedRateEl.value : ""; fedMargEl.classList.add("auto-filled"); }
+        } else {
+          fedCalc = calcFederal(incomeTaxBase, filingStatus);
+          if (fedRateEl) { fedRateEl.readOnly = true; fedRateEl.value = (fedCalc.effectiveRate * 100).toFixed(2); fedRateEl.classList.add("auto-filled"); }
+          if (fedMargEl) { fedMargEl.readOnly = true; fedMargEl.value = (fedCalc.marginalRate * 100).toFixed(0); fedMargEl.classList.add("auto-filled"); }
+        }
+      } else {
+        if (fedRateEl) { fedRateEl.readOnly = true; fedRateEl.value = ""; fedRateEl.classList.remove("auto-filled"); }
+        if (fedMargEl) { fedMargEl.readOnly = true; fedMargEl.value = ""; fedMargEl.classList.remove("auto-filled"); }
+      }
+      setText("fedTaxableDisplay", hasGross() && hasFederalSelection() ? money(fedCalc.taxable) : "—");
+      setText("fedBracketDisplay", hasGross() && hasFederalSelection() ? pct(fedCalc.marginalRate * 100, 0) : "—");
+
+      const stateInfo = STATE_TAX[selectedState];
+      const noTaxState = stateInfo && stateInfo.type === "none";
+      let stateCalc = { tax: 0, effectiveRate: 0, marginalRate: 0, taxable: 0, note: "" };
+
+      if (stateRateFields) stateRateFields.style.display = noTaxState ? "none" : "grid";
+      if (hasGross() && hasStateSelection()) {
+        if (selectedState === "custom") {
+          const customStateRate = gv("stateRate") / 100;
+          stateCalc = { tax: incomeTaxBase * customStateRate, effectiveRate: customStateRate, marginalRate: customStateRate, taxable: incomeTaxBase, note: "Custom state rate" };
+          if (stateRateEl) { stateRateEl.readOnly = false; stateRateEl.classList.add("auto-filled"); }
+          if (stateMargEl) { stateMargEl.readOnly = false; stateMargEl.value = stateRateEl && stateRateEl.value ? stateRateEl.value : ""; stateMargEl.classList.add("auto-filled"); }
+        } else {
+          stateCalc = calcState(incomeTaxBase, filingStatus || "single", selectedState);
+          if (!noTaxState) {
+            if (stateRateEl) { stateRateEl.readOnly = true; stateRateEl.value = (stateCalc.effectiveRate * 100).toFixed(2); stateRateEl.classList.add("auto-filled"); }
+            if (stateMargEl) { stateMargEl.readOnly = true; stateMargEl.value = (stateCalc.marginalRate * 100).toFixed(0); stateMargEl.classList.add("auto-filled"); }
+          }
+        }
+      } else {
+        if (stateRateEl) { stateRateEl.readOnly = true; stateRateEl.value = ""; stateRateEl.classList.remove("auto-filled"); }
+        if (stateMargEl) { stateMargEl.readOnly = true; stateMargEl.value = ""; stateMargEl.classList.remove("auto-filled"); }
+      }
+      const descEl = document.getElementById("stateBracketDesc");
+      if (descEl) {
+        if (!hasStateSelection()) descEl.textContent = "—";
+        else if (selectedState === "custom") descEl.textContent = "Custom state rate.";
+        else if (noTaxState) descEl.textContent = stateInfo.note;
+        else if (stateInfo && stateInfo.type === "flat") descEl.textContent = stateInfo.note || "";
+        else descEl.textContent = "";
+      }
+
+      // Tax amounts
+      const fedTax    = fedCalc.tax;
+      const stateTax  = stateCalc.tax;
+      const localTax  = incomeTaxBase * localTaxRate;
+      const ficaBase  = Math.min(Math.max(recurringGross - hsaEmployee - healthPremiums, 0), SS_WAGE_BASE);
+      const ficaFull  = Math.max(recurringGross - hsaEmployee - healthPremiums, 0);
+      const ssTax     = ficaBase * ssRate;
+      const medTax    = ficaFull * medicareRate;
+      const totalTax  = fedTax + stateTax + localTax + ssTax + medTax;
+      const recurringNet = recurringGross - preTax401k - hsaEmployee - healthPremiums - totalTax;
+      const paycheckNet  = payFrequency ? recurringNet / getPayPeriods(payFrequency) : 0;
+
+      const monthlyGross = recurringGross / 12;
+      const monthlyNet   = recurringNet / 12;
+      const effectiveGrossRate = annualHours ? recurringGross / annualHours : 0;
+
+      const dash = "—";
+      const fmt  = (v) => hasGross() ? money(v) : dash;
+
+      setText("cardRecurringGross", fmt(recurringGross));
+      setText("cardRecurringNet",   fmt(recurringNet));
+      setText("cardMonthlyGross",   fmt(monthlyGross));
+      setText("cardMonthlyNet",     fmt(monthlyNet));
+      setText("cardStraightRate",   hasGross() ? money2(effectiveRate) + "/hr" : dash);
+      setText("cardGrossRate",      hasGross() ? money2(effectiveGrossRate) + "/hr" : dash);
+
+      setText("basePay",       fmt(basePay));
+      setText("diffPay",       fmt(diffPay));
+      setText("otPay",         fmt(otPremium));
+      setText("holidayPay",    fmt(holidayPay));
+      setText("oncallOut",     fmt(oncallPay));
+      setText("bonusOut",      fmt(annualBonus));
+      setText("recurringGross",fmt(recurringGross));
+      setText("signOnOut",     fmt(signOn));
+      setText("fedTax",        fmt(fedTax));
+      setText("stateTax",      fmt(stateTax));
+      setText("localTax",      fmt(localTax));
+      setText("ssTax",         fmt(ssTax));
+      setText("medTax",        fmt(medTax));
+      setText("k401Out",       fmt(preTax401k));
+      setText("preTaxOut",     fmt(hsaEmployee + healthPremiums));
+      setText("recurringNet",  fmt(recurringNet));
+      setText("paycheckNet",   hasGross() && payFrequency ? money(paycheckNet) : "—");
+      setText("cardPaycheckNet", hasGross() && payFrequency ? money(paycheckNet) : "—");
+
+      // Update paycheck label with frequency
+      const freqLabels = { weekly:"Weekly net", biweekly:"Biweekly net", semimonthly:"Semimonthly net", monthly:"Monthly net (paycheck)" };
+      const plabel = document.getElementById("paycheckLabel");
+      if (plabel) plabel.textContent = payFrequency && freqLabels[payFrequency] ? freqLabels[payFrequency] : "Per paycheck net";
+      setText("rsuAnnualOut",  fmt(rsuAnnual));
+      setText("totalComp",     fmt(totalRewards));
+      setText("cardTotalComp", fmt(totalRewards));
+
+      const warnings = [];
+      if (rawOtHours > annualHours && annualHours > 0) warnings.push("OT hours exceed annual hours; OT was capped at annual hours for calculation.");
+      if (rawOtHours > 0 && !hasValue("otMultiplier")) warnings.push("OT hours are entered but OT multiplier is blank; OT counted at 1× (straight time) until a multiplier is entered.");
+      if (holidayHours > 0 && !hasValue("holidayPremium")) warnings.push("Holiday hours are entered but holiday premium multiplier is blank; defaulted to 0 until entered.");
+      if (document.getElementById("schedulePreset").value === "3434") warnings.push("3/4/4/3 preset assumes 208 annual OT hours from built-in 48-hour weeks. Verify employer OT policy.");
+      if (hasGross() && !hasFederalSelection()) warnings.push("Federal tax is not calculated until a filing status or custom federal rate is selected.");
+      if (hasGross() && !hasStateSelection()) warnings.push("State tax is not calculated until a state or custom state rate is selected.");
+      numberIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && Number(el.value) < 0) warnings.push(`${el.previousElementSibling ? el.previousElementSibling.textContent : id} is negative.`);
+      });
+      if (preTax401kPct > 1) warnings.push("401(k) contribution is above 100% of recurring gross.");
+      if (hsaEmployee > 8550) warnings.push("HSA employee contribution may exceed common family-limit ranges. Verify current IRS limit and employer contribution treatment.");
+      if (activeRsuCo === "custom") {
+        const customTotal = getRsuPcts().reduce((a,b) => a+b, 0);
+        if (Math.abs(customTotal - 100) >= 0.5) warnings.push(`Custom RSU percentages sum to ${customTotal}%, not 100%.`);
+      }
+      renderWarnings(warnings);
+
+      const pctOfTotal = (v) => hasGross() && totalComp > 0 ? ((v / totalComp) * 100).toFixed(1) + "%" : "—";
+      setText("totalCompPct",  pctOfTotal(totalRewards));
+      setText("basePayPct", pctOfTotal(basePay));
+      setText("diffPayPct", pctOfTotal(diffPay));
+      setText("otPayPct", pctOfTotal(otPremium));
+      setText("holidayPayPct", pctOfTotal(holidayPay));
+      setText("oncallPct", pctOfTotal(oncallPay));
+      setText("bonusPct", pctOfTotal(annualBonus));
+      setText("rsuPct", pctOfTotal(rsuAnnual));
+      setText("matchOut", fmt(matchAnnual));
+      setText("matchPct", pctOfTotal(matchAnnual));
+      setText("hsaEmployerOut", fmt(hsaEmployer));
+      setText("hsaEmployerPct", pctOfTotal(hsaEmployer));
+      setText("otherEquityOut", fmt(otherEquity));
+      setText("otherEquityPct", pctOfTotal(otherEquity));
+      setText("otherBenefitsOut", fmt(otherBenefits));
+      setText("otherBenefitsPct", pctOfTotal(otherBenefits));
+      setText("totalDeductionsOut", fmt(totalTax + preTax401k + hsaEmployee + healthPremiums));
+      setText("chartTotalComp", fmt(chartTotalComp));
+
+      if (hasGross()) {
+        // Bar order resequenced so no adjacent hues within 60°
+        drawChart([
+          { label:"Base salary",             value:basePay,      color:COLOR_MAP.base        },
+          { label:"Shift differential",       value:diffPay,      color:COLOR_MAP.differential },
+          { label:"Holiday premium",          value:holidayPay,   color:COLOR_MAP.holiday      },
+          { label:"On-call / stipend",        value:oncallPay,    color:COLOR_MAP.oncall       },
+          { label:"Overtime premium",         value:otPremium,    color:COLOR_MAP.ot           },
+          { label:"Annual bonus",             value:annualBonus,  color:COLOR_MAP.bonus        },
+          { label:"RSU (annualized)",         value:rsuAnnual,    color:COLOR_MAP.rsu          },
+          { label:"Sign-on (1st yr only)",    value:signOn,       color:COLOR_MAP.signon       },
+          { label:"401(k) employer match",    value:matchAnnual,  color:COLOR_MAP.match        },
+          { label:"HSA employer contribution",value:hsaEmployer,  color:COLOR_MAP.hsa          },
+          { label:"Other equity / profit-sharing", value:otherEquity, color:COLOR_MAP.otherEquity },
+          { label:"Other benefits / perks",   value:otherBenefits,color:COLOR_MAP.perks        }
+        ], chartTotalComp);
+      } else {
+        clearChart();
+      }
+
+      renderRsu();
+
+      if (hasGross() && getChartType() === "waterfall") {
+        drawWaterfall(recurringGross, fedTax, stateTax, localTax, ssTax, medTax, preTax401k, hsaEmployee, healthPremiums, recurringNet);
+      }
+    }
+
+    // ─── WATERFALL CHART ─────────────────────────────────────────────────────
+    function drawWaterfall(rGross, fedTax, stateTax, localTax, ssTax, medTax, k401, hsaEmp, health, rNet) {
+      const canvas  = document.getElementById("waterfallCanvas");
+      const emptyEl = document.getElementById("waterfallEmpty");
+      if (!canvas) return;
+      const steps = [
+        { label:"Recurring gross",     value:rGross,         isDed:false, isNet:false },
+        { label:"Federal tax",         value:fedTax,         isDed:true,  isNet:false },
+        { label:"State tax",           value:stateTax,       isDed:true,  isNet:false },
+        { label:"Local tax",           value:localTax,       isDed:true,  isNet:false },
+        { label:"Social security",     value:ssTax,          isDed:true,  isNet:false },
+        { label:"Medicare",            value:medTax,         isDed:true,  isNet:false },
+        { label:"401(k) contribution", value:k401,           isDed:true,  isNet:false },
+        { label:"HSA + health prem.",  value:hsaEmp+health,  isDed:true,  isNet:false },
+        { label:"Take-home (net)",     value:rNet,           isDed:false, isNet:true  },
+      ].filter(s => s.value > 0.5);
+      if (!steps.length) { canvas.style.display="none"; if(emptyEl) emptyEl.style.display="block"; return; }
+      if (emptyEl) emptyEl.style.display="none";
+      canvas.style.display="block";
+      const dpr=window.devicePixelRatio||1;
+      const W=Math.floor(canvas.parentElement.getBoundingClientRect().width)||600;
+      const BAR_H=30, GAP=8, LW=170, VW=0, CW=W-LW;
+      const H=steps.length*(BAR_H+GAP)+GAP;
+      canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr); canvas.style.height=H+"px";
+      const ctx=canvas.getContext("2d");
+      ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+      const cs=getComputedStyle(document.documentElement);
+      const cT=cs.getPropertyValue("--text").trim()||"#E2E8F0";
+      const cG=cs.getPropertyValue("--green").trim()||"#14b864";
+      const cR=cs.getPropertyValue("--red").trim()||"#EF4444";
+      const cB=cs.getPropertyValue("--blue").trim()||"#3B82F6";
+      const maxV=steps[0].value;
+      steps.forEach((s,i)=>{
+        const y=GAP+i*(BAR_H+GAP), mid=y+BAR_H/2;
+        const col=s.isNet?cG:(s.isDed?cR:cB);
+        ctx.font="500 10px 'JetBrains Mono',monospace"; ctx.textAlign="right"; ctx.textBaseline="middle"; ctx.fillStyle=col;
+        ctx.fillText(s.label.toUpperCase(),LW-8,mid);
+        ctx.fillStyle="rgba(255,255,255,0.04)"; ctx.fillRect(LW,y,CW,BAR_H);
+        const bW=Math.max((s.value/maxV)*CW,2);
+        const g=ctx.createLinearGradient(LW,0,LW+bW,0);
+        if(s.isNet){g.addColorStop(0,cG);g.addColorStop(1,"rgba(20,184,100,0.5)");}
+        else if(s.isDed){g.addColorStop(0,cR);g.addColorStop(1,"rgba(239,68,68,0.4)");}
+        else{g.addColorStop(0,cB);g.addColorStop(1,"rgba(59,130,246,0.5)");}
+        ctx.fillStyle=g; ctx.fillRect(LW,y,bW,BAR_H);
+        const valStr=(s.isDed?"−":"")+money(s.value);
+        ctx.font="600 10px 'JetBrains Mono',monospace"; ctx.textBaseline="middle";
+        const valW=ctx.measureText(valStr).width;
+        const valX=LW+bW+6;
+        // if value fits to the right of bar, draw there; else draw inside bar right-aligned
+        if(valX+valW < W-4){
+          ctx.textAlign="left"; ctx.fillStyle=col; ctx.fillText(valStr,valX,mid);
+        } else {
+          ctx.textAlign="right"; ctx.fillStyle="rgba(255,255,255,0.9)"; ctx.fillText(valStr,LW+bW-6,mid);
+        }
+      });
+    }
+
+    // ─── CHART RENDERING ─────────────────────────────────────────────────────
+    function getChartType() {
+      const el = document.getElementById("chartType");
+      const v  = el ? el.value : "stacked";
+      return ["stacked","donut","waterfall"].includes(v) ? v : "stacked";
+    }
+
+    function syncChartViews(type) {
+      const stackedView   = document.getElementById("stackedChartView");
+      const donutView     = document.getElementById("donutChartView");
+      const waterfallView = document.getElementById("waterfallChartView");
+      if (stackedView)   stackedView.classList.toggle("is-active",   type === "stacked");
+      if (donutView)     donutView.classList.toggle("is-active",     type === "donut");
+      if (waterfallView) waterfallView.classList.toggle("is-active", type === "waterfall");
+    }
+
+    function clearStackedChart() {
+      const bar = document.getElementById("stackedBar");
+      if (bar) bar.innerHTML = `<div class="stacked-bar-empty">Enter values to see breakdown</div>`;
+    }
+
+    function detachDonutPointerHandlers(canvas) {
+      if (!canvas || !canvas._donutPointerBundle) return;
+      const b = canvas._donutPointerBundle;
+      canvas.removeEventListener("mousemove", b.move);
+      canvas.removeEventListener("mouseleave", b.leave);
+      canvas.removeEventListener("touchstart", b.move);
+      canvas.removeEventListener("touchmove", b.move);
+      canvas.removeEventListener("touchend", b.leave);
+      canvas.removeEventListener("touchcancel", b.leave);
+      canvas._donutPointerBundle = null;
+      canvas.onmousemove = null;
+      canvas.onmouseleave = null;
+    }
+
+    function clearDonutChart() {
+      const canvas = document.getElementById("donutCanvas");
+      if (canvas) {
+        detachDonutPointerHandlers(canvas);
+        const ctx = canvas.getContext("2d");
+        const size = 260;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.floor(size * dpr);
+        canvas.height = Math.floor(size * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, size, size);
+      }
+      setText("donutCenterValue", "—");
+      setText("donutCenterSub", "Enter values");
+    }
+
+    function clearChart() {
+      syncChartViews(getChartType());
+      clearStackedChart();
+      clearDonutChart();
+      const legend = document.getElementById("cashFlowLegend");
+      if (legend) legend.innerHTML = "";
+      const tooltip = document.getElementById("barTooltip");
+      if (tooltip) tooltip.style.display = "none";
+    }
+
+    function drawChart(data, totalValue) {
+      const filtered = data.filter(d => d.value > 0);
+      const total = filtered.reduce((s, d) => s + d.value, 0);
+      const chartType = getChartType();
+      syncChartViews(chartType);
+
+      if (chartType === "waterfall") {
+        clearStackedChart();
+        clearDonutChart();
+        const leg = document.getElementById("cashFlowLegend");
+        if (leg) leg.innerHTML = "";
+        return;
+      }
+
+      if (!filtered.length || total <= 0) {
+        clearChart();
+        return;
+      }
+
+      const tooltip = document.getElementById("barTooltip");
+      if (tooltip) tooltip.style.display = "none";
+
+      if (chartType === "donut") {
+        clearStackedChart();
+        drawDonutChart(filtered, totalValue, total);
+      } else {
+        clearDonutChart();
+        drawStackedChart(filtered, totalValue, total);
+      }
+
+      renderChartLegend(filtered, totalValue);
+    }
+
+    function chartPointerXY(e) {
+      const t = e.touches && e.touches[0];
+      if (t) return { x: t.clientX, y: t.clientY };
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function drawStackedChart(filtered, totalValue, total) {
+      const bar = document.getElementById("stackedBar");
+      if (!bar) return;
+      const tooltip = document.getElementById("barTooltip");
+
+      bar.innerHTML = "";
+      filtered.forEach(d => {
+        const pct    = (d.value / total) * 100;
+        const dark   = d.color.dark   || d.color;
+        const bright = d.color.bright || d.color;
+        const seg    = document.createElement("div");
+        seg.className = "bar-segment";
+        seg.style.width      = pct + "%";
+        seg.style.background = `linear-gradient(90deg, ${dark}, ${bright})`;
+        seg.style.minWidth   = pct > 1 ? "4px" : "0px";
+
+        const showTip = e => {
+          if (!tooltip) return;
+          const { x, y } = chartPointerXY(e);
+          if (x === undefined || y === undefined) return;
+          const pctLabel = totalValue > 0 ? ((d.value / totalValue) * 100).toFixed(1) : "0.0";
+          tooltip.innerHTML = `<strong style="color:${bright}">${d.label}</strong><br>${money(d.value)} &nbsp;·&nbsp; ${pctLabel}% of total`;
+          tooltip.style.display = "block";
+          tooltip.style.left = (x + 12) + "px";
+          tooltip.style.top  = (y - 36) + "px";
+        };
+        const hideTip = () => { if (tooltip) tooltip.style.display = "none"; };
+
+        seg.addEventListener("mousemove", showTip);
+        seg.addEventListener("mouseleave", hideTip);
+        seg.addEventListener("touchstart", showTip, { passive: true });
+        seg.addEventListener("touchmove", showTip, { passive: true });
+        seg.addEventListener("touchend", hideTip, { passive: true });
+        seg.addEventListener("touchcancel", hideTip, { passive: true });
+
+        bar.appendChild(seg);
+      });
+    }
+
+    function drawDonutChart(filtered, totalValue, total) {
+      const canvas = document.getElementById("donutCanvas");
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      const rect = canvas.getBoundingClientRect();
+      const size = Math.max(220, Math.min(Math.floor(rect.width || 280), 320));
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(size * dpr);
+      canvas.height = Math.floor(size * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, size, size);
+
+      const cx = size / 2;
+      const cy = size / 2;
+      const outer = Math.min(size / 2 - 10, 146);
+      const inner = Math.max(outer * 0.56, 68);
+      const slices = [];
+      let cursor = 0;
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, outer, 0, Math.PI * 2);
+      ctx.arc(cx, cy, inner, Math.PI * 2, 0, true);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(26,40,64,.38)";
+      ctx.fill();
+
+      filtered.forEach(d => {
+        const angle = (d.value / total) * Math.PI * 2;
+        const start = cursor;
+        const end = cursor + angle;
+        const gap = Math.min(Math.PI / 180, angle / 4);
+        const drawStart = -Math.PI / 2 + start + gap;
+        const drawEnd = -Math.PI / 2 + end - gap;
+        const bright = d.color.bright || d.color;
+        const dark   = d.color.dark   || d.color;
+
+        // Radial gradient: dark at inner ring, bright at outer ring
+        const grad = ctx.createRadialGradient(cx, cy, inner, cx, cy, outer);
+        grad.addColorStop(0, dark);
+        grad.addColorStop(1, bright);
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, outer, drawStart, drawEnd);
+        ctx.arc(cx, cy, inner, drawEnd, drawStart, true);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        slices.push({ start, end, data: d, bright });
+        cursor = end;
+      });
+
+      setText("donutCenterValue", money(totalValue));
+      setText("donutCenterSub", filtered.length === 1 ? "1 component" : `${filtered.length} components`);
+
+      const tooltip = document.getElementById("barTooltip");
+      detachDonutPointerHandlers(canvas);
+
+      const updateDonutTooltip = (clientX, clientY) => {
+        if (!tooltip) return;
+        const currentRect = canvas.getBoundingClientRect();
+        const scale = size / (currentRect.width || size);
+        const x = (clientX - currentRect.left) * scale;
+        const y = (clientY - currentRect.top) * scale;
+        const dx = x - cx;
+        const dy = y - cy;
+        const radius = Math.sqrt(dx * dx + dy * dy);
+        const angle = (Math.atan2(dy, dx) + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
+        const slice = radius >= inner && radius <= outer
+          ? slices.find(s => angle >= s.start && angle < s.end)
+          : null;
+
+        if (!slice) {
+          tooltip.style.display = "none";
+          return;
+        }
+
+        const pctLabel = totalValue > 0 ? ((slice.data.value / totalValue) * 100).toFixed(1) : "0.0";
+        tooltip.innerHTML = `<strong style="color:${slice.bright}">${slice.data.label}</strong><br>${money(slice.data.value)} &nbsp;·&nbsp; ${pctLabel}% of total`;
+        tooltip.style.display = "block";
+        tooltip.style.left = (clientX + 12) + "px";
+        tooltip.style.top  = (clientY - 36) + "px";
+      };
+
+      const onDonutPointer = e => {
+        const { x, y } = chartPointerXY(e);
+        if (x === undefined || y === undefined) return;
+        updateDonutTooltip(x, y);
+      };
+      const onDonutLeave = () => { if (tooltip) tooltip.style.display = "none"; };
+
+      canvas._donutPointerBundle = { move: onDonutPointer, leave: onDonutLeave };
+      canvas.addEventListener("mousemove", onDonutPointer);
+      canvas.addEventListener("mouseleave", onDonutLeave);
+      canvas.addEventListener("touchstart", onDonutPointer, { passive: true });
+      canvas.addEventListener("touchmove", onDonutPointer, { passive: true });
+      canvas.addEventListener("touchend", onDonutLeave, { passive: true });
+      canvas.addEventListener("touchcancel", onDonutLeave, { passive: true });
+    }
+
+    function renderChartLegend(filtered, totalValue) {
+      const legend = document.getElementById("cashFlowLegend");
+      if (legend) {
+        legend.innerHTML = filtered.map(d => {
+          const bright   = d.color.bright || d.color;
+          const dark     = d.color.dark   || d.color;
+          const pctLabel = totalValue > 0 ? ((d.value / totalValue) * 100).toFixed(1) : "0.0";
+          return `<div class="legend-item">
+            <span class="legend-swatch" style="background:linear-gradient(90deg,${dark},${bright})"></span>
+            <div class="legend-item-text">
+              <span class="legend-label">${d.label}</span>
+              <span class="legend-sub">${money(d.value)}<span>${pctLabel}%</span></span>
+            </div>
+          </div>`;
+        }).join("");
+      }
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      const r = Math.min(radius, height/2, width/2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + width, y, x + width, y + height, r);
+      ctx.arcTo(x + width, y + height, x, y + height, r);
+      ctx.arcTo(x, y + height, x, y, r);
+      ctx.arcTo(x, y, x + width, y, r);
+      ctx.closePath();
+    }
+
+    // ─── RSU VESTING ──────────────────────────────────────────────────────────
+    const RSU_SCHEDULES = {
+      msft:   { pcts:[25,25,25,25],  label:"Microsoft · Equal annual",      desc:"25% vests each year at your grant anniversary. Most predictable structure.", color:"#2f81f7" },
+      amzn:   { pcts:[5,15,40,40],   label:"Amazon · Backloaded 5/15/40/40", desc:"5% year 1, 15% year 2, then 80% in years 3–4. Leaving before year 3 means forfeiting most of the grant.", color:"#d29922" },
+      meta:   { pcts:[25,25,25,25],  label:"Meta · Quarterly (25%/yr equiv.)",desc:"1/16th vests each quarter over 4 years — effectively 25% per year with smoother quarterly cash flow.", color:"#56d364" },
+      goog:   { pcts:[25,25,25,25],  label:"Google / Apple · Equal annual",  desc:"25% per year. Apple typically vests quarterly at the same annual rate.", color:"#39c5cf" },
+      custom: { pcts:[25,25,25,25],  label:"Custom schedule",               desc:"Enter your own percentages. Must sum to 100%.", color:"#7c3aed" }
+    };
+    const RSU_BAR_COLORS = [
+      "#6366F1","#22C55E","#7C3AED","#F59E0B",
+      "#EF4444","#06B6D4","#C026D3","#0D9488",
+      "#EA580C","#CA8A04"
+    ];
+    const RSU_BELT_CLASSES = [
+      "belt-year1","belt-year2","belt-year3","belt-year4",
+      "belt-year1","belt-year2","belt-year3","belt-year4",
+      "belt-year1","belt-year2"
+    ];
+    let activeRsuCo = "";
+
+    function getRsuPcts() {
+      const years = Math.max(gv("rsuYears") || 4, 1);
+      if (activeRsuCo === "custom") {
+        // Read as many inputs as years allows, up to 10
+        const ids = ["rsuC1","rsuC2","rsuC3","rsuC4","rsuC5","rsuC6","rsuC7","rsuC8","rsuC9","rsuC10"];
+        return ids.slice(0, years).map(id => {
+          const el = document.getElementById(id);
+          return el ? (Number(el.value) || 0) : 0;
+        });
+      }
+      // For presets, distribute evenly across rsuYears
+      const base = RSU_SCHEDULES[activeRsuCo]?.pcts || [25,25,25,25];
+      if (base.length === years) return base;
+      // Redistribute evenly
+      const even = Math.floor(100 / years);
+      const rem  = 100 - even * years;
+      return Array.from({length: years}, (_, i) => i === years - 1 ? even + rem : even);
+    }
+
+    function renderRsu() {
+      const grant = gv("rsuGrant");
+      const years = Math.max(gv("rsuYears") || 4, 1);
+
+      // Nothing selected yet — show placeholder
+      if (!activeRsuCo || !RSU_SCHEDULES[activeRsuCo]) {
+        const rsuTableRows = document.getElementById("rsuTableRows");
+        if (rsuTableRows) rsuTableRows.innerHTML = `<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:12px 0;font-size:11px;">Select a vesting schedule above</td></tr>`;
+        return;
+      }
+
+      const sched = RSU_SCHEDULES[activeRsuCo];
+      const pcts  = getRsuPcts();
+      const total = pcts.reduce((a,b) => a+b, 0);
+
+      // Rebuild custom inputs if showing custom and year count changed
+      const customInputs = document.getElementById("rsuCustomInputs");
+      if (customInputs) {
+        if (activeRsuCo === "custom") {
+          customInputs.style.display = "grid";
+          const existing = customInputs.querySelectorAll("input").length;
+          if (existing !== years) {
+            customInputs.innerHTML = "";
+            for (let i = 1; i <= years; i++) {
+              const even = Math.floor(100 / years);
+              const rem  = 100 - even * years;
+              const def  = i === years ? even + rem : even;
+              const div  = document.createElement("div");
+              div.className = "field";
+              div.innerHTML = `<label>Year ${i} %</label><input id="rsuC${i}" type="number" inputmode="decimal" step="1" value="${def}" min="0" max="100">`;
+              customInputs.appendChild(div);
+            }
+            // Re-wire listeners for new inputs
+            for (let i = 1; i <= years; i++) {
+              const el = document.getElementById(`rsuC${i}`);
+              if (el) el.addEventListener("input", () => { renderRsu(); calc(); });
+            }
+          }
+        } else {
+          customInputs.style.display = "none";
+        }
+      }
+
+      const descEl = document.getElementById("rsuDesc");
+      if (descEl) {
+        if (activeRsuCo === "custom") {
+          const valid = Math.abs(total - 100) < 0.5;
+          descEl.innerHTML = `<span>Custom schedule</span> — ${valid ? "Percentages sum to 100%." : `<span style="color:var(--red)">Warning: percentages sum to ${total}%, not 100%.</span>`}`;
+        } else {
+          descEl.innerHTML = `<span>${sched.label}</span> — ${sched.desc}`;
+        }
+      }
+
+      const yearRowsEl = document.getElementById("rsuYearRows");
+      if (yearRowsEl) yearRowsEl.innerHTML = "";
+      let cumulative = 0;
+      const vestAmounts = pcts.map(p => grant * p / 100);
+      const cumAmounts  = [];
+
+      pcts.forEach((p, i) => {
+        const vest = grant * p / 100;
+        cumulative += vest;
+        cumAmounts.push(cumulative);
+        if (yearRowsEl) {
+          const barPct = total > 0 ? (p / Math.max(...pcts)) * 100 : 0;
+          const row = document.createElement("div");
+          row.className = "rsu-year-row";
+          row.innerHTML = `
+            <div class="rsu-year-label">Yr ${i+1}</div>
+            <div class="rsu-bar-wrap"><div class="rsu-bar-fill" style="width:${barPct}%;background:${RSU_BAR_COLORS[i]};"></div></div>
+            <div class="rsu-pct-label">${Math.round(p)}%</div>
+            <div class="rsu-val-label" style="color:${RSU_BAR_COLORS[i]}">${grant > 0 ? money(vest) : "—"}</div>
+          `;
+          yearRowsEl.appendChild(row);
+        }
+      });
+
+      const rsuTableRows = document.getElementById("rsuTableRows");
+      if (rsuTableRows) {
+        rsuTableRows.innerHTML = "";
+        pcts.forEach((p, i) => {
+          const vest = grant * p / 100;
+          const cum = cumAmounts[i] || 0;
+          const tr = document.createElement("tr");
+          // Bar shows cumulative vested % — tells the retention story
+          const cumulativeWidth = grant > 0 ? Math.max(0, Math.min(100, (cum / grant) * 100)) : pcts.slice(0,i+1).reduce((a,b)=>a+b,0);
+          tr.innerHTML = `<td>${i + 1}</td><td>${Math.round(p)}%</td><td>${grant > 0 ? money(vest) : "—"}</td><td class="rsu-progress-cell"><div class="rsu-belt-label">Year ${i + 1}</div><div class="rsu-belt-track"><div class="rsu-belt-annual ${RSU_BELT_CLASSES[i % RSU_BELT_CLASSES.length] || "belt-year1"}" style="width:${cumulativeWidth}%"></div></div></td>`;
+          rsuTableRows.appendChild(tr);
+        });
+        const totalRow = document.createElement("tr");
+        totalRow.className = "total-row rsu-total-row";
+        totalRow.innerHTML = `<td>Total</td><td>${Math.round(total)}%</td><td>${grant > 0 ? money(grant) : "—"}</td><td></td>`;
+        rsuTableRows.appendChild(totalRow);
+      }
+
+      const rsuSelect = document.getElementById("rsuScheduleSelect");
+      if (rsuSelect && rsuSelect.value !== activeRsuCo) rsuSelect.value = activeRsuCo;
+
+      const legacyRsuCanvas = document.getElementById("rsuChart");
+      if (legacyRsuCanvas) drawRsuChart(vestAmounts, pcts, grant);
+    }
+
+    function drawRsuChart(vestAmounts, pcts, grant) {
+      const canvas = document.getElementById("rsuChart");
+      if (!canvas || !canvas.getContext) return;
+      const ctx    = canvas.getContext("2d");
+      const dpr    = window.devicePixelRatio || 1;
+      const rect   = canvas.getBoundingClientRect();
+      canvas.width  = Math.max(600, Math.floor(rect.width * dpr));
+      canvas.height = Math.floor(200 * dpr);
+      ctx.scale(dpr, dpr);
+      const w = canvas.width / dpr, h = canvas.height / dpr;
+      ctx.clearRect(0, 0, w, h);
+
+      if (grant <= 0) {
+        ctx.fillStyle = "#8b949e"; ctx.font = "12px 'JetBrains Mono', monospace"; ctx.textAlign = "center";
+        ctx.fillText("Enter RSU grant amount to see vesting chart", w/2, h/2);
+        ctx.textAlign = "left"; return;
+      }
+
+      const pad = { top:20, right:16, bottom:48, left:72 };
+      const plotW = w - pad.left - pad.right, plotH = h - pad.top - pad.bottom;
+      const maxVal = Math.max(...vestAmounts, 1);
+      const axisMax = Math.ceil(maxVal / 1000) * 1000;
+
+      ctx.strokeStyle = "rgba(139,148,158,.15)"; ctx.lineWidth = 1;
+      ctx.font = "10px 'JetBrains Mono', monospace"; ctx.fillStyle = "#8b949e";
+      for (let i = 0; i <= 4; i++) {
+        const y = pad.top + plotH - (plotH * i / 4);
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+        ctx.fillText("$" + Math.round(axisMax * i / 4 / 1000) + "k", 4, y + 4);
+      }
+
+      const gap = 20, barW = Math.max(40, (plotW - gap * (vestAmounts.length - 1)) / vestAmounts.length);
+      vestAmounts.forEach((val, i) => {
+        const x = pad.left + i * (barW + gap);
+        const barH = (val / axisMax) * plotH;
+        const y = pad.top + plotH - barH;
+        ctx.fillStyle = RSU_BAR_COLORS[i];
+        roundRect(ctx, x, y, barW, barH, 4); ctx.fill();
+        if (barH > 24) {
+          ctx.fillStyle = "rgba(230,237,243,.85)"; ctx.font = "bold 11px 'JetBrains Mono', monospace"; ctx.textAlign = "center";
+          ctx.fillText(pcts[i] + "%", x + barW/2, y + 16);
+        }
+        ctx.fillStyle = RSU_BAR_COLORS[i]; ctx.font = "10px 'JetBrains Mono', monospace"; ctx.textAlign = "center";
+        ctx.fillText(money(val), x + barW/2, Math.max(y - 5, pad.top + 10));
+        ctx.fillStyle = "#8b949e"; ctx.font = "11px 'JetBrains Mono', monospace";
+        ctx.fillText("Year " + (i+1), x + barW/2, h - 30);
+        ctx.font = "10px 'JetBrains Mono', monospace";
+        ctx.fillText(pcts[i] + "%", x + barW/2, h - 16);
+      });
+      ctx.textAlign = "left";
+    }
+
+    // ─── EVENT WIRING ─────────────────────────────────────────────────────────
+    // Number inputs
+    const numberIds = ["shiftLength","annualShifts","annualHours","otHours",
+                       "baseRate","diffValue","otMultiplier","holidayHours","holidayPremium",
+                       "oncallPay","annualBonus","signOn","rsuGrant","rsuYears",
+                       "matchAnnual","hsaEmployer","otherBenefits","otherEquity",
+                       "ssRate","medicareRate","preTax401k","hsaEmployee","healthPremiums","localTaxRate"];
+
+    numberIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", () => {
+        if (scheduleIds.includes(id)) document.getElementById("schedulePreset").value = "";
+        updateBonusLabel(); updateDifferentialLabel(); calc();
+      });
+    });
+
+    // Selects that affect calc
+    ["diffType","bonusType","payFrequency"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", () => { updateBonusLabel(); updateDifferentialLabel(); calc(); });
+    });
+
+    // Pay type toggle — enables baseRate input and updates label
+    (function() {
+      const payTypeEl = document.getElementById("payType");
+      const baseRateEl = document.getElementById("baseRate");
+      const baseRateLabelEl = document.getElementById("baseRateLabel");
+      if (!payTypeEl || !baseRateEl) return;
+      payTypeEl.addEventListener("change", function() {
+        const val = this.value;
+        const isHourly = val === "hourly";
+        const isSalary = val === "salary";
+        const active = isHourly || isSalary;
+        baseRateEl.disabled = !active;
+        baseRateEl.style.opacity = active ? "1" : ".45";
+        baseRateEl.style.cursor = active ? "" : "not-allowed";
+        baseRateEl.step = isSalary ? "1000" : "0.01";
+        if (baseRateLabelEl) baseRateLabelEl.childNodes[0].textContent = isSalary ? "Annual salary ($)" : "Hourly rate ($/hr)";
+        if (!active) baseRateEl.value = "";
+        updateBonusLabel(); updateDifferentialLabel(); calc();
+      });
+    })();
+
+    const chartTypeEl = document.getElementById("chartType");
+    if (chartTypeEl) chartTypeEl.addEventListener("change", calc);
+
+    // Schedule preset dropdown
+    document.getElementById("schedulePreset").addEventListener("change", function() {
+      const key = this.value;
+      if (key === "") {
+        ["shiftLength","annualShifts","annualHours","otHours"].forEach(id => {
+          document.getElementById(id).value = "";
+        });
+      } else {
+        const p = schedulePresets[key];
+        if (p) Object.keys(p).forEach(k => { const el = document.getElementById(k); if (el) el.value = p[k]; });
+      }
+      calc();
+    });
+
+    // Filing status select
+    document.getElementById("filingSelect").addEventListener("change", function() {
+      filingStatus = this.value;
+      calc();
+    });
+
+    // RSU company pills
+    function setActiveRsuCompany(co) {
+      activeRsuCo = co;
+      document.querySelectorAll(".rsu-co-pill").forEach(x => x.classList.toggle("active", x.dataset.co === activeRsuCo));
+      const rsuSelect = document.getElementById("rsuScheduleSelect");
+      if (rsuSelect) rsuSelect.value = activeRsuCo;
+      renderRsu();
+    }
+
+    document.querySelectorAll(".rsu-co-pill").forEach(p => {
+      p.addEventListener("click", () => setActiveRsuCompany(p.dataset.co));
+    });
+
+    const rsuScheduleSelect = document.getElementById("rsuScheduleSelect");
+    if (rsuScheduleSelect) {
+      rsuScheduleSelect.addEventListener("change", e => {
+        const val = e.target.value;
+        if (!val) {
+          activeRsuCo = "";
+          document.querySelectorAll(".rsu-co-pill").forEach(x => x.classList.remove("active"));
+          renderRsu();
+        } else {
+          setActiveRsuCompany(val);
+        }
+      });
+    }
+
+    const rsuYearsEl = document.getElementById("rsuYears");
+    if (rsuYearsEl) rsuYearsEl.addEventListener("input", () => { renderRsu(); calc(); });
+    document.getElementById("reset").addEventListener("click", () => {
+      applyValues(blankDefaults);
+      filingStatus = "";
+      selectedState = "";
+      document.getElementById("filingSelect").value = "";
+      document.getElementById("stateSelect").value = "";
+      document.getElementById("schedulePreset").value = "";
+      document.getElementById("diffType").value = "percent";
+      document.getElementById("bonusType").value = "flat";
+      document.getElementById("payFrequency").value = "";
+      // Reset pay type
+      const payTypeEl = document.getElementById("payType");
+      const baseRateEl = document.getElementById("baseRate");
+      const baseRateLabelEl = document.getElementById("baseRateLabel");
+      if (payTypeEl) payTypeEl.value = "";
+      if (baseRateEl) { baseRateEl.value = ""; baseRateEl.disabled = true; baseRateEl.style.opacity = ".45"; baseRateEl.style.cursor = "not-allowed"; baseRateEl.step = "0.01"; }
+      if (baseRateLabelEl) baseRateLabelEl.childNodes[0].textContent = "Pay rate ($)";
+      // Reset RSU to blank
+      activeRsuCo = "";
+      document.querySelectorAll(".rsu-co-pill").forEach(x => x.classList.remove("active"));
+      const rsuSel = document.getElementById("rsuScheduleSelect");
+      if (rsuSel) rsuSel.value = "";
+      updateBonusLabel(); updateDifferentialLabel(); calc(); renderRsu();
+    });
+
+    let resizeTimer;
+    window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(calc, 100); });
+
+    // ─── PANEL TOGGLES ────────────────────────────────────────────────────────
+    const panelState = {
+      summary:    true,
+      schedule:   true,
+      pay:        true,
+      equity:     true,
+      taxes:      true,
+      breakdown:  true,
+      chart:      true,
+      taxsummary: true,
+      rsu:        true
+    };
+
+    const panelConfig = {
+      summary:    { bodyId: "summaryPanelBody",    iconId: "summaryToggleIcon" },
+      schedule:   { bodyId: "schedulePanelBody",   iconId: "scheduleToggleIcon" },
+      pay:        { bodyId: "payPanelBody",        iconId: "payToggleIcon" },
+      equity:     { bodyId: "equityPanelBody",     iconId: "equityToggleIcon" },
+      taxes:      { bodyId: "taxesPanelBody",      iconId: "taxesToggleIcon" },
+      breakdown:  { bodyId: "breakdownPanelBody",  iconId: "breakdownToggleIcon" },
+      chart:      { bodyId: "chartPanelBody",      iconId: "chartToggleIcon" },
+      taxsummary: { bodyId: "taxsummaryPanelBody", iconId: "taxsummaryToggleIcon" },
+      rsu:        { bodyId: "rsuPanelBody",        iconId: "rsuToggleIcon" }
+    };
+
+    function syncPanelControl(key) {
+      const { bodyId, iconId } = panelConfig[key];
+      const body = document.getElementById(bodyId);
+      const icon = document.getElementById(iconId);
+      const open = panelState[key];
+      if (body) body.style.display = open ? "block" : "none";
+      if (icon) icon.style.transform = open ? "rotate(0deg)" : "rotate(-90deg)";
+      const head = icon ? icon.closest(".panel-head") : null;
+      if (head) head.setAttribute("aria-expanded", String(open));
+    }
+
+    function setupPanelControls() {
+      Object.keys(panelConfig).forEach(key => {
+        const { bodyId, iconId } = panelConfig[key];
+        const icon = document.getElementById(iconId);
+        const head = icon ? icon.closest(".panel-head") : null;
+        if (!head || head.dataset.panelControlReady === "true") return;
+
+        head.dataset.panelControlReady = "true";
+        head.tabIndex = 0;
+        head.setAttribute("role", "button");
+        head.setAttribute("aria-controls", bodyId);
+        head.setAttribute("aria-expanded", String(panelState[key]));
+        head.addEventListener("click", () => head.focus());
+        head.addEventListener("keydown", e => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          togglePanel(key);
+        });
+      });
+    }
+
+    function getPanelHead(key) {
+      const cfg = panelConfig[key];
+      const icon = cfg ? document.getElementById(cfg.iconId) : null;
+      return icon ? icon.closest(".panel-head") : null;
+    }
+
+    function getPanelKeyFromField(field) {
+      const body = field.closest(".panel-body");
+      if (!body || !body.id) return "";
+      return Object.keys(panelConfig).find(key => panelConfig[key].bodyId === body.id) || "";
+    }
+
+    function collapseFocusedPanelFromField(e) {
+      if (e.key !== "Tab" || !e.shiftKey) return;
+      const field = e.target;
+      if (!field.matches || !field.matches("input, select, textarea")) return;
+
+      const key = getPanelKeyFromField(field);
+      if (!key || !panelState[key]) return;
+
+      e.preventDefault();
+      panelState[key] = false;
+      syncPanelControl(key);
+      const head = getPanelHead(key);
+      if (head) head.focus();
+    }
+
+    function togglePanel(key) {
+      panelState[key] = !panelState[key];
+      syncPanelControl(key);
+      if (key === "rsu" && panelState[key]) renderRsu();
+    }
+
+    // ─── SHORTCUT PANEL TOGGLE ────────────────────────────────────────────────
+    function toggleShortcuts(e) {
+      e.stopPropagation();
+      const dd = document.getElementById("shortcutDropdown");
+      if (dd) dd.classList.toggle("is-open");
+    }
+    function closeShortcutIfOutside(e) {
+      const panel = document.getElementById("shortcutPanel");
+      const dd = document.getElementById("shortcutDropdown");
+      if (dd && panel && !panel.contains(e.target)) dd.classList.remove("is-open");
+    }
+    document.addEventListener("click", closeShortcutIfOutside);
+    document.addEventListener("touchstart", closeShortcutIfOutside, { passive: true });
+
+    // ─── EXPORT PDF ───────────────────────────────────────────────────────────
+    function exportPDF() {
+      const wasOpen = {};
+      Object.keys(panelState).forEach(key => {
+        wasOpen[key] = panelState[key];
+        if (!panelState[key]) {
+          panelState[key] = true;
+          syncPanelControl(key);
+        }
+      });
+      const origTitle = document.title;
+      document.title = "Compensation_Calculator_v4_8";
+
+      let restored = false;
+      let printMqCleanup = null;
+
+      function restoreAfterPrint() {
+        if (restored) return;
+        restored = true;
+        window.removeEventListener("afterprint", onAfterPrint);
+        if (printMqCleanup) printMqCleanup();
+        Object.keys(wasOpen).forEach(key => {
+          if (!wasOpen[key]) {
+            panelState[key] = false;
+            syncPanelControl(key);
+          }
+        });
+        document.title = origTitle;
+      }
+
+      function onAfterPrint() {
+        restoreAfterPrint();
+      }
+
+      window.addEventListener("afterprint", onAfterPrint);
+
+      if (window.matchMedia) {
+        const mq = window.matchMedia("print");
+        const onMq = () => {
+          if (!mq.matches) restoreAfterPrint();
+        };
+        if (mq.addEventListener) mq.addEventListener("change", onMq);
+        else mq.addListener(onMq);
+        printMqCleanup = () => {
+          if (mq.removeEventListener) mq.removeEventListener("change", onMq);
+          else mq.removeListener(onMq);
+        };
+      }
+
+      setTimeout(() => {
+        window.print();
+      }, 120);
+
+      setTimeout(() => {
+        if (restored) return;
+        const mq = window.matchMedia && window.matchMedia("print");
+        if (mq && mq.matches) return;
+        restoreAfterPrint();
+      }, 3000);
+    }
+
+    // ─── INIT ─────────────────────────────────────────────────────────────────
+    // Apply initial panel states to DOM
+    setupPanelControls();
+    Object.keys(panelConfig).forEach(syncPanelControl);
+    buildStateSelect();
+    updateBonusLabel();
+    updateDifferentialLabel();
+    attachHelpTips();
+    document.addEventListener("keydown", collapseFocusedPanelFromField);
+    document.addEventListener("click", () => {
+      document.querySelectorAll(".help-tip.is-open").forEach(tip => tip.classList.remove("is-open"));
+    });
+    calc();
+    renderRsu();
+  </script>
+</body>
+</html>
