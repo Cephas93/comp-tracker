@@ -1,2 +1,2 @@
 # comp-tracker
-An interactive tool used to track annual earnings v1
+A tool used to track annual earnings v1
