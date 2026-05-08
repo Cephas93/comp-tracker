@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#04080F" />
   <title>Compensation Calculator v5.1</title>
   <style>
     :root {
@@ -360,7 +361,6 @@
   box-shadow: 0 4px 20px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.03);
   overflow: visible;
   position: relative;
-  isolation: auto;
 }
 
     .card .label {
@@ -992,11 +992,17 @@
       .summary-cards, .top-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
+    @media (max-width: 768px) {
+      /* Prevent iOS Safari auto-zoom on input focus (requires font-size >= 16px) */
+      input, select { font-size: 16px; }
+    }
+
     @media (max-width: 480px) {
       body { font-size: 11px; }
       .app { width: min(100%, calc(100vw - 16px)); margin: 10px auto 20px; }
       .summary-cards, .top-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .inputs { grid-template-columns: 1fr; }
+      .rsu-custom-inputs { grid-template-columns: repeat(2, 1fr); }
       .card .value { font-size: clamp(13px, 5vw, 18px); }
       .panel-body { padding: 10px 12px 12px; }
       .panel-head { padding: 10px 12px 9px; }
@@ -1055,10 +1061,10 @@
       <div class="header-side">
         <div class="tax-year-badge">2025 Tax Year</div>
         <div class="top-actions">
-          <button id="reset">Reset to blank</button>
-          <button onclick="exportPDF()">⬇ Export PDF</button>
+          <button id="reset" type="button">Reset to blank</button>
+          <button type="button" onclick="exportPDF()">⬇ Export PDF</button>
           <div id="shortcutPanel">
-            <button id="shortcutToggleBtn" onclick="toggleShortcuts(event)" title="Keyboard shortcuts" style="min-width:160px;">⌨ Keyboard Shortcuts</button>
+            <button id="shortcutToggleBtn" type="button" onclick="toggleShortcuts(event)" title="Keyboard shortcuts" style="min-width:160px;">⌨ Keyboard Shortcuts</button>
             <div id="shortcutDropdown">
               <div class="shortcut-title">Keyboard Shortcuts</div>
               <div class="shortcut-list">
@@ -1066,7 +1072,6 @@
                 <div class="shortcut-item"><span class="key-combo"><kbd>Shift</kbd><span>+</span><kbd>Tab</kbd></span><span>Collapse the current section from inside a field.</span></div>
                 <div class="shortcut-item"><span class="key-combo"><kbd>Enter</kbd></span><span>Expand or collapse a highlighted section.</span></div>
                 <div class="shortcut-item"><span class="key-combo"><kbd>Space</kbd></span><span>Expand or collapse a highlighted section.</span></div>
-                <div class="shortcut-item"><span class="key-combo"><kbd>?</kbd></span><span>Hover or tap for plain-English term help.</span></div>
               </div>
             </div>
           </div>
@@ -1083,7 +1088,7 @@
           <div class="panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('profile')">
               <div class="panel-title">Compensation Profile</div>
-              <div id="profileToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="profileToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="profilePanelBody">
               <div class="inputs">
@@ -1105,7 +1110,7 @@
           <div class="panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('pay')">
               <div class="panel-title">Pay</div>
-              <div id="payToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="payToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="payPanelBody">
               <div class="inputs">
@@ -1143,7 +1148,7 @@
           <div class="panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('taxes')">
               <div class="panel-title">Taxes & Deductions</div>
-              <div id="taxesToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="taxesToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="taxesPanelBody">
               <div style="margin-bottom:12px;">
@@ -1248,7 +1253,7 @@
           <div class="panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('schedule')">
               <div class="panel-title">Work Schedule / Hours</div>
-              <div id="scheduleToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="scheduleToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="schedulePanelBody">
               <div class="inputs" style="margin-bottom:10px;">
@@ -1287,7 +1292,7 @@
           <div class="panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('advancedPay')">
               <div class="panel-title">Advanced Pay</div>
-              <div id="advancedPayToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="advancedPayToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="advancedPayPanelBody">
               <div class="inputs">
@@ -1325,7 +1330,7 @@
           <div class="panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('equity')">
               <div class="panel-title">Equity / Employer Value</div>
-              <div id="equityToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="equityToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="equityPanelBody">
               <div class="inputs">
@@ -1356,7 +1361,7 @@
         <div class="panel" style="margin-bottom:12px;">
           <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('summary')">
             <div class="panel-title">Summary</div>
-            <div id="summaryToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+            <div id="summaryToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
           </div>
           <div class="panel-body" id="summaryPanelBody">
             <div class="summary-cards top-metrics">
@@ -1368,17 +1373,17 @@
               <div class="card" style="--card-accent:var(--green)">
                 <div class="label">Est. take-home pay</div>
                 <div id="cardRecurringNet" class="value green">—</div>
-                <div class="note">After taxes & deductions<br>(excludes RSU)</div>
+                <div class="note">After all taxes & deductions<br>(excludes RSU)</div>
               </div>
               <div class="card" style="--card-accent:var(--violet)">
                 <div class="label">Annualized add-ons</div>
                 <div id="cardTotalComp" class="value violet">—</div>
-                <div class="note">Bonus + RSU + 401k + HSA + equity + perks.<br>Excludes one-time sign-on.</div>
+                <div class="note">RSU + 401k match + HSA + equity + perks.<br>Excludes bonus & sign-on.</div>
               </div>
               <div class="card compact-rate-card" style="--card-accent:var(--amber)">
                 <div class="label">Rate view</div>
                 <div class="rate-lines">
-                  <div><span>Monthly gross</span><strong id="cardMonthlyGross" class="amber">—</strong></div>
+                  <div><span>Avg monthly gross</span><strong id="cardMonthlyGross" class="amber">—</strong></div>
                   <div><span>Monthly net</span><strong id="cardMonthlyNet" class="teal">—</strong></div>
                   <div><span id="paycheckLabel">Per paycheck net</span><strong id="cardPaycheckNet" class="green">—</strong></div>
                   <div><span>Straight rate</span><strong id="cardStraightRate" class="cyan">—</strong></div>
@@ -1394,7 +1399,7 @@
           <div class="panel comp-panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('breakdown')">
               <div class="panel-title">Recurring compensation breakdown (annualized)</div>
-              <div id="breakdownToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="breakdownToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="breakdownPanelBody">
               <table class="breakdown-table">
@@ -1426,7 +1431,7 @@
           <div class="panel tax-panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('taxsummary')">
               <div class="panel-title">Tax & deduction summary (est.)</div>
-              <div id="taxsummaryToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="taxsummaryToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="taxsummaryPanelBody">
               <table class="summary-table">
@@ -1438,8 +1443,8 @@
                   <tr><td>FICA (Medicare)</td><td id="medTax">—</td></tr>
                   <tr><td>401(k) contribution</td><td id="k401Out">—</td></tr>
                   <tr><td>HSA + health premiums</td><td id="preTaxOut">—</td></tr>
-                  <tr><td>Annual recurring net</td><td id="recurringNet">—</td></tr>
-                  <tr><td>Estimated paycheck net</td><td id="paycheckNet">—</td></tr>
+                  <tr><td>Est. annual take-home</td><td id="recurringNet">—</td></tr>
+                  <tr><td>Avg per-paycheck net</td><td id="paycheckNet">—</td></tr>
                   <tr class="total-row red-total"><td>Total taxes & deductions</td><td id="totalDeductionsOut">—</td></tr>
                 </tbody>
               </table>
@@ -1453,7 +1458,7 @@
           <div class="panel cashflow-panel">
             <div class="panel-head" style="cursor:pointer;" onclick="togglePanel('chart')">
               <div class="panel-title">Compensation mix (est.)</div>
-              <div id="chartToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+              <div id="chartToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
             </div>
             <div class="panel-body" id="chartPanelBody">
 
@@ -1520,7 +1525,7 @@
                   <option value="goog">Equal annual / quarterly vest</option>
                   <option value="custom">Custom vesting schedule</option>
                 </select>
-                <div id="rsuToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;">▾</div>
+                <div id="rsuToggleIcon" style="color:var(--muted);font-size:14px;transition:transform .2s;" aria-hidden="true">▾</div>
               </div>
             </div>
             <div class="panel-body" id="rsuPanelBody">
@@ -1588,13 +1593,13 @@
       AL: { name:"Alabama",        type:"brackets", stdDed:{single:3000,mfj:8500}, brackets:[[0,.02],[500,.04],[3000,.05]] },
       AK: { name:"Alaska",         type:"none",     note:"No state income tax" },
       AZ: { name:"Arizona",        type:"flat",     rate:.025, note:"2.5% flat rate" },
-      AR: { name:"Arkansas",       type:"brackets", stdDed:{single:2200,mfj:4400}, brackets:[[0,.02],[4999,.04],[8999,.044]] },
+      AR: { name:"Arkansas",       type:"brackets", stdDed:{single:2200,mfj:4400}, brackets:[[0,.02],[4999,.039]] },
       CA: { name:"California",     type:"brackets", stdDed:{single:5202,mfj:10404}, brackets:[[0,.01],[10412,.02],[24684,.04],[38959,.06],[54081,.08],[68350,.093],[349137,.103],[418961,.113],[698274,.123],[1000000,.133]] },
       CO: { name:"Colorado",       type:"flat",     rate:.044, note:"4.4% flat rate" },
       CT: { name:"Connecticut",    type:"brackets", stdDed:{single:15000,mfj:24000}, brackets:[[0,.03],[10000,.05],[50000,.055],[100000,.06],[200000,.065],[250000,.069],[500000,.0699]] },
       DE: { name:"Delaware",       type:"brackets", stdDed:{single:3250,mfj:6500}, brackets:[[0,0],[2000,.022],[5000,.039],[10000,.048],[20000,.052],[25000,.0555],[60000,.066]] },
       FL: { name:"Florida",        type:"none",     note:"No state income tax" },
-      GA: { name:"Georgia",        type:"flat",     rate:.055, note:"5.49% flat (phasing to 4.99%)" },
+      GA: { name:"Georgia",        type:"flat",     rate:.0519, note:"5.19% flat (phasing to 4.99%)" },
       HI: { name:"Hawaii",         type:"brackets", stdDed:{single:2200,mfj:4400}, brackets:[[0,.014],[2400,.032],[4800,.055],[9600,.064],[14400,.068],[19200,.072],[24000,.076],[36000,.079],[48000,.0825],[150000,.09],[175000,.10],[200000,.11]] },
       ID: { name:"Idaho",          type:"flat",     rate:.058, note:"5.8% flat rate" },
       IL: { name:"Illinois",       type:"flat",     rate:.0495, note:"4.95% flat rate" },
@@ -1602,18 +1607,18 @@
       IA: { name:"Iowa",           type:"flat",     rate:.057, note:"5.7% flat (phasing down)" },
       KS: { name:"Kansas",         type:"brackets", stdDed:{single:3500,mfj:8000}, brackets:[[0,.031],[15000,.057],[30000,.057]] },
       KY: { name:"Kentucky",       type:"flat",     rate:.04, note:"4.0% flat rate" },
-      LA: { name:"Louisiana",      type:"brackets", stdDed:{single:4500,mfj:9000}, brackets:[[0,.0185],[12500,.035],[50000,.0425]] },
+      LA: { name:"Louisiana",      type:"flat",     rate:.03, note:"3% flat rate (effective Jan 1, 2025)" },
       ME: { name:"Maine",          type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,.058],[24500,.0675],[58050,.0715]] },
       MD: { name:"Maryland",       type:"brackets", stdDed:{single:2400,mfj:4850}, brackets:[[0,.02],[1000,.03],[2000,.04],[3000,.0475],[100000,.05],[125000,.0525],[150000,.055],[250000,.0575]] },
       MA: { name:"Massachusetts",  type:"flat",     rate:.05, note:"5.0% flat (9% on income >$1M)" },
       MI: { name:"Michigan",       type:"flat",     rate:.0425, note:"4.25% flat rate" },
       MN: { name:"Minnesota",      type:"brackets", stdDed:{single:14575,mfj:29150}, brackets:[[0,.0535],[30070,.068],[98760,.0785],[183340,.0985]] },
       MS: { name:"Mississippi",    type:"flat",     rate:.047, note:"4.7% flat (phasing to 4%)" },
-      MO: { name:"Missouri",       type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,0],[1207,.02],[2414,.025],[3621,.03],[4828,.035],[6035,.04],[7242,.045],[8432,.05],[9639,.054]] },
+      MO: { name:"Missouri",       type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,0],[1207,.02],[2414,.025],[3621,.03],[4828,.035],[6035,.04],[7242,.045],[8432,.047]] },
       MT: { name:"Montana",        type:"brackets", stdDed:{single:5540,mfj:11080}, brackets:[[0,.01],[3600,.02],[6300,.03],[9700,.04],[13000,.05],[16800,.06],[21600,.0675]] },
       NE: { name:"Nebraska",       type:"brackets", stdDed:{single:7900,mfj:15800}, brackets:[[0,.0246],[3700,.0351],[22170,.0501],[32210,.0664]] },
       NV: { name:"Nevada",         type:"none",     note:"No state income tax" },
-      NH: { name:"New Hampshire",  type:"none",     note:"No tax on wages (interest/dividends only)" },
+      NH: { name:"New Hampshire",  type:"none",     note:"No state income tax (as of Jan 1, 2025)" },
       NJ: { name:"New Jersey",     type:"brackets", stdDed:{single:0,mfj:0}, brackets:[[0,.014],[20000,.0175],[35000,.035],[40000,.05526],[75000,.0637],[500000,.0897],[1000000,.1075]] },
       NM: { name:"New Mexico",     type:"brackets", stdDed:{single:14600,mfj:29200}, brackets:[[0,.015],[5500,.032],[11000,.047],[16000,.049],[210000,.059]] },
       NY: { name:"New York",       type:"brackets", stdDed:{single:8000,mfj:16050}, brackets:[[0,.04],[8500,.045],[11700,.0525],[13900,.059],[80650,.0633],[215400,.0685],[1077550,.0965],[5000000,.103],[25000000,.109]] },
@@ -1835,9 +1840,9 @@
       { selector:'label[for="rsuGrant"]',      text:"Total stock grant value at award date. Actual value varies with stock price." },
       { selector:'label[for="rsuYears"]',      text:"Years until fully vested. Vesting schedule shown below." },
       { selector:'#summaryPanelBody .card:nth-child(1) .label', text:"Annual gross pay from base, differentials, and OT. Pre-tax, excludes bonus and RSUs." },
-      { selector:'#summaryPanelBody .card:nth-child(2) .label', text:"Estimated annual take-home after taxes and pre-tax deductions." },
-      { selector:'#summaryPanelBody .card:nth-child(3) .label', text:"Bonus, RSU, 401k, HSA, equity, and perks — annualized. Excludes one-time sign-on." },
-      { selector:'#summaryPanelBody .card:nth-child(4) .label', text:"Monthly, per-paycheck, and effective hourly views of recurring pay." }
+      { selector:'#summaryPanelBody .card:nth-child(2) .label', text:"Estimated annual take-home from wages and bonus, after all taxes and deductions. Excludes RSU." },
+      { selector:'#summaryPanelBody .card:nth-child(3) .label', text:"RSU, 401k match, HSA, equity, and perks — annualized. Excludes bonus and sign-on." },
+      { selector:'#summaryPanelBody .card:nth-child(4) .label', text:"Monthly and per-paycheck averages including bonus, plus effective hourly rates." }
     ];
 
     const PANEL_HELP = [
@@ -1869,14 +1874,14 @@
       otherEquityOut:   "Annual value of non-RSU equity or profit sharing.",
       otherBenefitsOut: "Annual value of other perks and stipends.",
       totalComp:        "Annualized add-ons. Sign-on excluded — it's one-time.",
-      fedTax:           "Estimated federal income tax on recurring taxable pay.",
-      stateTax:         "Estimated state income tax on recurring taxable pay.",
+      fedTax:           "Estimated federal income tax on wages and bonus.",
+      stateTax:         "Estimated state income tax on wages and bonus.",
       localTax:         "Estimated local income tax, if entered.",
       ssTax:            "Estimated Social Security payroll tax.",
       medTax:           "Estimated Medicare payroll tax.",
       k401Out:          "Your estimated annual 401(k) contribution.",
       preTaxOut:        "HSA contribution plus pre-tax health premiums.",
-      recurringNet:     "Estimated annual take-home from recurring pay.",
+      recurringNet:     "Estimated annual take-home from wages and bonus, after all taxes and deductions.",
       paycheckNet:      "Estimated per-paycheck take-home. Requires pay frequency.",
       totalDeductionsOut:"Total taxes plus pre-tax deductions."
     };
@@ -1953,7 +1958,8 @@
       const diffRate       = diffType === "percent" ? baseRate * diffValue / 100 : (diffType === "flat" ? diffValue : 0);
       const effectiveRate  = baseRate + diffRate;
       const otMultiplier   = hasValue("otMultiplier") ? gv("otMultiplier") : 1;
-      const holidayHours   = Math.max(gv("holidayHours"), 0);
+      const rawHolidayHours = gv("holidayHours");
+      const holidayHours    = Math.min(Math.max(rawHolidayHours, 0), annualHours);
       const holidayMult    = gv("holidayPremium");
       const oncallPay      = Math.max(gv("oncallPay"), 0);
       const bonusType      = document.getElementById("bonusType") ? document.getElementById("bonusType").value : "";
@@ -1990,7 +1996,7 @@
       const chartTotalComp = totalComp + signOn;
 
       const preTax401k     = recurringGross * preTax401kPct;
-      const incomeTaxBase  = Math.max(recurringGross - preTax401k - hsaEmployee - healthPremiums, 0);
+      const incomeTaxBase  = Math.max(recurringGross + annualBonus - preTax401k - hsaEmployee - healthPremiums, 0);
 
       const fedRateEl = document.getElementById("federalRate");
       const fedMargEl = document.getElementById("federalMarginal");
@@ -2052,17 +2058,17 @@
       const fedTax    = fedCalc.tax;
       const stateTax  = stateCalc.tax;
       const localTax  = incomeTaxBase * localTaxRate;
-      const ficaBase  = Math.min(Math.max(recurringGross - hsaEmployee - healthPremiums, 0), SS_WAGE_BASE);
-      const ficaFull  = Math.max(recurringGross - hsaEmployee - healthPremiums, 0);
+      const ficaBase  = Math.min(Math.max(recurringGross + annualBonus - hsaEmployee - healthPremiums, 0), SS_WAGE_BASE);
+      const ficaFull  = Math.max(recurringGross + annualBonus - hsaEmployee - healthPremiums, 0);
       const ssTax     = ficaBase * ssRate;
       const medTax    = ficaFull * medicareRate;
       const addlMedThreshold = filingStatus === "mfj" ? 250000 : filingStatus === "mfs" ? 125000 : 200000;
       const addlMedTax = Math.max(ficaFull - addlMedThreshold, 0) * 0.009;
       const totalTax  = fedTax + stateTax + localTax + ssTax + medTax + addlMedTax;
-      const recurringNet = recurringGross - preTax401k - hsaEmployee - healthPremiums - totalTax;
+      const recurringNet = recurringGross + annualBonus - preTax401k - hsaEmployee - healthPremiums - totalTax;
       const paycheckNet  = payFrequency ? recurringNet / getPayPeriods(payFrequency) : 0;
 
-      const monthlyGross = recurringGross / 12;
+      const monthlyGross = (recurringGross + annualBonus) / 12;
       const monthlyNet   = recurringNet / 12;
       const effectiveGrossRate = annualHours ? recurringGross / annualHours : 0;
 
@@ -2101,12 +2107,14 @@
       if (plabel) plabel.textContent = payFrequency && freqLabels[payFrequency] ? freqLabels[payFrequency] : "Per paycheck net";
       setText("rsuAnnualOut",  fmt(rsuAnnual));
       setText("totalComp",     fmt(totalComp));
-      setText("cardTotalComp", fmt(totalRewards));
+      setText("cardTotalComp", fmt(totalRewards - annualBonus));
 
       const warnings = [];
       if (rawOtHours > annualHours && annualHours > 0) warnings.push("OT hours exceed annual hours; OT was capped at annual hours for calculation.");
+      if (rawHolidayHours > annualHours && annualHours > 0) warnings.push("Holiday hours exceed annual hours; holiday premium was capped at annual hours for calculation.");
       if (rawOtHours > 0 && !hasValue("otMultiplier")) warnings.push("OT hours are entered but OT multiplier is blank; OT counted at 1× (straight time) until a multiplier is entered.");
       if (holidayHours > 0 && !hasValue("holidayPremium")) warnings.push("Holiday hours are entered but holiday premium multiplier is blank; defaulted to 0 until entered.");
+      if (holidayHours > 0 && hasValue("holidayPremium") && gv("holidayPremium") < 1) warnings.push("Holiday premium multiplier is less than 1; holiday premium is $0. Use 1.5 for time-and-a-half.");
       if (document.getElementById("schedulePreset").value === "3434") warnings.push("3/4/4/3 preset assumes 208 annual OT hours from built-in 48-hour weeks. Verify employer OT policy.");
       if (hasGross() && !hasFederalSelection()) warnings.push("Federal tax is not calculated until a filing status or custom federal rate is selected.");
       if (hasGross() && filingStatus === "custom" && !hasValue("federalRate")) warnings.push("Custom federal rate is selected but blank; federal tax is calculated as 0% until entered.");
@@ -2126,6 +2134,7 @@
         const customTotal = getRsuPcts().reduce((a,b) => a+b, 0);
         if (Math.abs(customTotal - 100) >= 0.5) warnings.push(`Custom RSU percentages sum to ${customTotal}%, not 100%.`);
       }
+      if (hasGross() && recurringNet < 0) warnings.push("Estimated take-home is negative — taxes and deductions exceed recurring gross pay.");
       renderWarnings(warnings);
 
       const pctOfTotal = (v) => hasGross() && totalComp > 0 ? ((v / totalComp) * 100).toFixed(1) + "%" : "—";
@@ -2171,7 +2180,7 @@
       renderRsu();
 
       if (hasGross() && getChartType() === "waterfall") {
-        drawWaterfall(recurringGross, fedTax, stateTax, localTax, ssTax, medTax + addlMedTax, preTax401k, hsaEmployee, healthPremiums, recurringNet);
+        drawWaterfall(recurringGross + annualBonus, fedTax, stateTax, localTax, ssTax, medTax + addlMedTax, preTax401k, hsaEmployee, healthPremiums, recurringNet);
       }
     }
 
@@ -2181,7 +2190,7 @@
       const emptyEl = document.getElementById("waterfallEmpty");
       if (!canvas) return;
       const steps = [
-        { label:"Recurring gross",     value:rGross,         isDed:false, isNet:false },
+        { label:"Gross pay",           value:rGross,         isDed:false, isNet:false },
         { label:"Federal tax",         value:fedTax,         isDed:true,  isNet:false },
         { label:"State tax",           value:stateTax,       isDed:true,  isNet:false },
         { label:"Local tax",           value:localTax,       isDed:true,  isNet:false },
@@ -2592,16 +2601,6 @@
       const pcts  = getRsuPcts();
       const total = pcts.reduce((a,b) => a+b, 0);
 
-      const descEl = document.getElementById("rsuDesc");
-      if (descEl) {
-        if (activeRsuCo === "custom") {
-          const valid = Math.abs(total - 100) < 0.5;
-          descEl.innerHTML = `<span>Custom schedule</span> — ${valid ? "Percentages sum to 100%." : `<span style="color:var(--red)">Warning: percentages sum to ${total}%, not 100%.</span>`}`;
-        } else {
-          descEl.innerHTML = `<span>${sched.label}</span> — ${sched.desc}`;
-        }
-      }
-
       const yearRowsEl = document.getElementById("rsuYearRows");
       if (yearRowsEl) yearRowsEl.innerHTML = "";
       let cumulative = 0;
@@ -2817,8 +2816,6 @@
       });
     }
 
-    const rsuYearsEl = document.getElementById("rsuYears");
-    if (rsuYearsEl) rsuYearsEl.addEventListener("input", scheduleCalc);
     const resetEl = document.getElementById("reset");
     if (resetEl) resetEl.addEventListener("click", () => {
       applyValues(blankDefaults);
